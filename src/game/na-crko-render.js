@@ -12,6 +12,15 @@ const CATEGORY_SCENE_IMAGES = {
   hrana: "./assets/scenes/hrana.webp"
 };
 
+const CATEGORY_THUMBNAIL_IMAGES = {
+  predmet: "./assets/category_images/predmet.webp",
+  mesto: "./assets/category_images/mesto.webp",
+  drzava: "./assets/category_images/drzava.webp",
+  zival: "./assets/category_images/zival.webp",
+  poklic: "./assets/category_images/poklic.webp",
+  hrana: "./assets/category_images/hrana.webp"
+};
+
 const KEYBOARD_ROWS = [
   ["Q", "W", "E", "R", "T", "Z", "U", "I", "O", "P", "Š", "Ž"],
   ["A", "S", "D", "F", "G", "H", "J", "K", "L", "Č"],
@@ -98,7 +107,7 @@ function renderHintButton(state, compact = false) {
   `;
 }
 
-function getStatusContent(state) {
+function getPlayingStatusContent(state) {
   if (state.round.status === "playing" && state.effects.hintRevealedLetter) {
     return {
       className: "status-banner neutral hint pulse",
@@ -126,100 +135,11 @@ function getStatusContent(state) {
     };
   }
 
-  if (state.round.status === "word-solved") {
-    return {
-      className: "status-banner success pulse",
-      kicker: "PRAVILNO",
-      title: `+${state.round.pointsAwardedLastStep} točk`,
-      text: state.effects.hintRevealedLetter
-        ? `Pomoč je razkrila črko: ${state.effects.hintRevealedLetter}`
-        : "Beseda je rešena. Nadaljuj na naslednjo kategorijo."
-    };
-  }
-
-  if (state.round.status === "word-failed") {
-    return {
-      className: "status-banner failure pulse",
-      kicker: "NI USPELO",
-      title: `Pravilna beseda: ${escapeHtml(state.round.answer)}`,
-      text: "Izgubil si eno življenje. Nadaljuješ na naslednjo kategorijo."
-    };
-  }
-
-  if (state.round.status === "letter-complete") {
-    const perfectText = state.round.lastPerfectBonus ? ` + ${state.round.lastPerfectBonus} popolna črka` : "";
-    return {
-      className: "status-banner reward pulse",
-      kicker: `Črka ${state.run.currentLetter} zaključena`,
-      title: `+${state.round.lastLetterBonus}${perfectText}`,
-      text: "Dobiš bonus, eno življenje nazaj in novo črko."
-    };
-  }
-
   return {
     className: "status-banner neutral",
     kicker: "Na potezi",
     title: "Ugibaj črke",
     text: `Pri tej besedi imaš ${state.round.maxWrongGuesses} napak.`
-  };
-}
-
-function getMobileStatusText(state) {
-  if (state.round.status === "playing" && state.effects.hintRevealedLetter) {
-    return `Pomoč je razkrila črko: ${state.effects.hintRevealedLetter}`;
-  }
-
-  if (state.round.status === "playing" && state.effects.hintUnavailable) {
-    return "Pomoč ni več potrebna.";
-  }
-
-  if (state.round.status === "playing" && state.effects.wrongLetter) {
-    return `Ni te črke · ${state.effects.wrongLetter} ni v besedi`;
-  }
-
-  if (state.round.status === "word-solved") {
-    return state.effects.hintRevealedLetter
-      ? `Pomoč je razkrila črko: ${state.effects.hintRevealedLetter}`
-      : `Pravilno · +${state.round.pointsAwardedLastStep} točk`;
-  }
-
-  if (state.round.status === "word-failed") {
-    return `Ni uspelo · Pravilna beseda: ${state.round.answer}`;
-  }
-
-  if (state.round.status === "letter-complete") {
-    const perfect = state.round.lastPerfectBonus ? ` · +${state.round.lastPerfectBonus}` : "";
-    return `Črka zaključena · +${state.round.lastLetterBonus}${perfect}`;
-  }
-
-  return `Ugibaj črke · ${state.round.maxWrongGuesses} napak`;
-}
-
-function getActionContent(state) {
-  if (state.round.status === "word-solved") {
-    return {
-      label: "Naslednja kategorija",
-      hint: "Kategorija je zaključena. Poberi točke in nadaljuj."
-    };
-  }
-
-  if (state.round.status === "word-failed") {
-    return {
-      label: "Naslednja kategorija",
-      hint: "Beseda je razkrita. Premakni se naprej."
-    };
-  }
-
-  if (state.round.status === "game-over") {
-    return {
-      label: "Nova igra",
-      hint: "Tek je končan. Začni nov poskus."
-    };
-  }
-
-  return {
-    label: "Začni znova",
-    hint: `Preostale napake v tej besedi: ${state.round.maxWrongGuesses - state.round.wrongGuessCount}.`
   };
 }
 
@@ -307,8 +227,8 @@ function renderCategoryProgress(state) {
         .filter(Boolean)
         .join(" ");
 
-      const status = isSolved ? "Rešeno" : isFailed ? "Zgrešeno" : isCurrent ? "Trenutno" : "Sledi";
-      const badge = isSolved ? "✓" : isFailed ? "✕" : isCurrent ? "●" : "→";
+      const status = isSolved ? "Rešeno" : isFailed ? "Zgrešeno" : isCurrent ? "Trenutno" : "Zaklenjeno";
+      const badge = isSolved ? "✓" : isFailed ? "✕" : isCurrent ? "●" : "🔒";
 
       return `
         <div class="${className}">
@@ -338,11 +258,11 @@ function renderDrawingCard(state, categoryId, compact = false, transition = null
 
   return `
     <div class="drawing-card${compact ? " drawing-card-compact" : ""}">
-      <div class="drawing-top drawing-top-solo">
+      ${compact ? "" : `<div class="drawing-top drawing-top-solo">
         <div class="mistake-pill${state.effects.pulseMistakes ? " pulse" : ""}">
           Napake: <strong>${state.round.wrongGuessCount} / ${state.round.maxWrongGuesses}</strong>
         </div>
-      </div>
+      </div>`}
       <div class="svg-frame${state.effects.bumpStage ? " bump" : ""}${compact ? " svg-frame-compact" : ""}${transitionClass}">
         <div class="drawing-background" style="--scene-image: url('${sceneImage}')" aria-hidden="true"></div>
         ${showPreviousScene ? `<div class="drawing-background drawing-background-previous" style="--scene-image: url('${previousSceneImage}')" aria-hidden="true"></div>` : ""}
@@ -368,38 +288,106 @@ function getCategoryAccentClass(categoryId) {
 }
 
 function renderMobileCategorySpotlight(state, category, progressCurrent, progressTotal) {
+  const thumbnailImage = CATEGORY_THUMBNAIL_IMAGES[category.id] || CATEGORY_THUMBNAIL_IMAGES.predmet;
+
   return `
     <section class="mobile-category-spotlight ${getCategoryAccentClass(category.id)}" aria-label="Trenutna kategorija">
-      <div class="mobile-category-head">
-        <div>
-          <span class="panel-label">KATEGORIJA</span>
-          <h2 class="mobile-category-name">${escapeHtml(category.label)}</h2>
-        </div>
-        <div class="mobile-category-icon" aria-hidden="true">${category.icon}</div>
-      </div>
-      <div class="mobile-category-meta">
-        <span class="mobile-letter-chip">Črka ${state.run.currentLetter}</span>
-        <span class="mobile-category-step">${progressCurrent} / ${progressTotal}</span>
+      <div class="mobile-category-thumbnail" style="--category-thumbnail: url('${thumbnailImage}')" aria-hidden="true"></div>
+      <div class="mobile-category-copy">
+        <h2 class="mobile-category-name">${escapeHtml(category.label)}</h2>
+        <p class="mobile-category-meta">
+          <span>Črka <strong>${state.run.currentLetter}</strong></span>
+          <span class="mobile-category-meta-divider" aria-hidden="true">•</span>
+          <span>${progressCurrent}/${progressTotal}</span>
+        </p>
       </div>
     </section>
   `;
 }
 
-function renderActionRow(state, action, compact = false, autoAdvance = null) {
-  const isActivePlay = state.round.status === "playing";
-  const isSolvedReward = state.round.status === "word-solved";
+function getAutoAdvanceUi(autoAdvance) {
+  if (!autoAdvance?.active) {
+    return {
+      seconds: 0
+    };
+  }
+
+  const remaining = Math.max(0, autoAdvance.endsAt - Date.now());
+  const seconds = Math.max(0, Math.ceil(remaining / 1000));
+
+  return {
+    seconds
+  };
+}
+
+function getResultActionContent(state, autoAdvance) {
+  const { seconds } = getAutoAdvanceUi(autoAdvance);
+
+  if (state.round.status === "word-solved") {
+    return {
+      className: "result-action-panel success",
+      headline: `✅ Pravilno · +${state.round.pointsAwardedLastStep} točk`,
+      countdown: `Čez ${seconds}s`,
+      details: "",
+      showButton: true
+    };
+  }
+
+  if (state.round.status === "word-failed") {
+    return {
+      className: "result-action-panel failure",
+      headline: `💔 Ni uspelo · ${escapeHtml(state.round.answer)}`,
+      countdown: `Čez ${seconds}s`,
+      details: "",
+      showButton: true
+    };
+  }
+
+  if (state.round.status === "letter-complete") {
+    const details = [];
+
+    if (state.round.lastPerfectBonus) {
+      details.push(`+${state.round.lastPerfectBonus} bonus`);
+    }
+
+    if (state.round.lastLifeGained) {
+      details.push("+1 življenje");
+    }
+
+    return {
+      className: "result-action-panel reward",
+      headline: `⭐ Črka ${state.run.currentLetter} zaključena · +${state.round.lastLetterBonus} točk`,
+      countdown: `Čez ${seconds}s`,
+      details: details.join(" • "),
+      showButton: true
+    };
+  }
+
+  return {
+    className: "result-action-panel idle",
+    headline: "Ugani besedo.",
+    countdown: "",
+    details: "Izberi črko.",
+    showButton: false
+  };
+}
+
+function renderResultActionPanel(state, autoAdvance = null, compact = false) {
+  const content = getResultActionContent(state, autoAdvance);
+
   return `
-    <div class="action-row${compact ? " action-row-compact" : ""}${isActivePlay ? " action-row-active" : ""}${isSolvedReward ? " action-row-reward" : ""}">
-      <p class="action-hint">${action.hint}</p>
-      ${autoAdvance?.active ? `<p class="action-auto-hint">${autoAdvance.text}</p>` : ""}
-      <button
-        class="${isActivePlay ? "secondary-button restart-button" : "primary-button"}"
-        type="button"
-        data-action="${isActivePlay ? "restart" : "advance"}"
-      >
-        ${action.label}
-      </button>
-    </div>
+    <section class="${content.className}${compact ? " result-action-panel-compact" : ""}" aria-live="polite">
+      <div class="result-action-copy">
+        <p class="result-action-headline">${content.headline}</p>
+        ${content.details ? `<p class="result-action-details">${content.details}</p>` : ""}
+        ${
+          content.showButton
+            ? `<p class="result-action-countdown" data-auto-advance-countdown>${content.countdown}</p>`
+            : ""
+        }
+      </div>
+      ${content.showButton ? `<button class="primary-button result-action-button" type="button" data-action="advance">Naprej</button>` : '<div class="result-action-button-slot" aria-hidden="true"></div>'}
+    </section>
   `;
 }
 
@@ -412,35 +400,15 @@ function renderRulesButton(compact = false) {
       aria-label="Odpri pravila igre"
       title="Pravila"
     >
-      <span aria-hidden="true">?</span>
+      <span class="help-button-icon" aria-hidden="true">?</span>
       <span class="help-button-label">Pravila</span>
     </button>
   `;
 }
 
 function renderOverlay(state) {
-  if (state.round.status !== "letter-complete" && state.round.status !== "game-over") {
+  if (state.round.status !== "game-over") {
     return "";
-  }
-
-  if (state.round.status === "letter-complete") {
-    const pointsGained = state.round.lastLetterBonus + state.round.lastPerfectBonus;
-
-    return `
-      <div class="overlay reward-overlay" role="dialog" aria-modal="true" aria-labelledby="letter-complete-title" aria-describedby="letter-complete-text" data-letter-complete-dialog>
-        <section class="overlay-card reward-modal">
-          <span class="reward-modal-spark" aria-hidden="true">★</span>
-          <h2 class="overlay-title reward-modal-title" id="letter-complete-title">Bravo!</h2>
-          <p class="overlay-text reward-modal-text" id="letter-complete-text">Črka ${state.run.currentLetter} je zaključena.</p>
-          <p class="reward-modal-secondary">Nova črka te čaka.</p>
-          <div class="reward-modal-bonuses">
-            ${state.round.lastLifeGained ? '<span class="reward-chip">+1 življenje</span>' : ""}
-            ${pointsGained ? `<span class="reward-chip">+${pointsGained} točk</span>` : ""}
-          </div>
-          <button class="primary-button reward-modal-button" type="button" data-action="advance">Naprej</button>
-        </section>
-      </div>
-    `;
   }
 
   const summary = state.round.finalSummary;
@@ -471,9 +439,7 @@ export function renderApp(root, state, alphabet, options = {}) {
   const visibleTotalPoints = state.profile.totalPoints + state.run.runPoints;
   const levelInfo = getLevelInfo(visibleTotalPoints);
   const currentCategory = getCurrentCategory(state);
-  const status = getStatusContent(state);
-  const mobileStatusText = getMobileStatusText(state);
-  const action = getActionContent(state);
+  const status = getPlayingStatusContent(state);
   const revealAll = state.round.status !== "playing" && state.round.status !== "word-solved";
   const isSolvedReveal = state.round.status === "word-solved";
   const isFailedReveal = state.round.status === "word-failed";
@@ -486,7 +452,6 @@ export function renderApp(root, state, alphabet, options = {}) {
   const shellTransitionClass = transitionPhase ? ` category-transition-${transitionPhase}` : "";
   const highlightedLetter = state.effects.correctLetter || state.effects.hintRevealedLetter;
   const highlightedKind = state.effects.hintRevealedLetter ? "hint" : "correct";
-
   root.innerHTML = `
     <div class="shell-glow"></div>
     <main class="game-shell${shellTransitionClass}">
@@ -497,26 +462,22 @@ export function renderApp(root, state, alphabet, options = {}) {
           <div class="mobile-hud-hearts" aria-label="Življenja">
             ${renderHearts(state.run.lives, state.effects.pulseLife, state.round.status)}
           </div>
-          <div class="mobile-hud-challenge">${escapeHtml(currentCategory.label)} · ${progressCurrent}/${progressTotal}</div>
-          <div class="mobile-hud-points">${visibleTotalPoints} točk</div>
+          <div class="mobile-hud-points"><span aria-hidden="true">⭐</span> ${visibleTotalPoints} točk</div>
           ${renderRulesButton(true)}
         </header>
 
         <section class="mobile-main-play">
           ${renderMobileCategorySpotlight(state, currentCategory, progressCurrent, progressTotal)}
 
-          <section class="word-board mobile-word-board${isSolvedReveal ? " word-board-solved" : ""}" aria-live="polite" aria-label="Skrita beseda">
-            <div class="word-tools">
-              ${renderHintButton(state, true)}
-            </div>
+          <section class="word-board mobile-word-board${isSolvedReveal ? " word-board-solved" : ""}${isFailedReveal ? " word-board-revealed" : ""}" aria-live="polite" aria-label="Skrita beseda">
             <div class="word-display${isFailedReveal ? " word-display-revealed" : ""}">
               ${renderWord(state.round.answer, state.round.revealedLetters, revealAll, state.run.currentLetter, highlightedLetter, highlightedKind)}
             </div>
+            <div class="mobile-word-footer">
+              <p class="mobile-word-helper">${state.round.maxWrongGuesses} napak v tej besedi</p>
+              ${renderHintButton(state, true)}
+            </div>
           </section>
-
-          <div class="${status.className} mobile-status-banner">
-            <p class="mobile-status-copy">${mobileStatusText}</p>
-          </div>
 
           <section class="mobile-drawing-panel">
             ${renderDrawingCard(state, currentCategory.id, true, categoryTransition)}
@@ -530,17 +491,9 @@ export function renderApp(root, state, alphabet, options = {}) {
             </div>
           </section>
 
-          ${state.round.status !== "letter-complete" ? renderActionRow(state, action, true, autoAdvance) : ""}
+          ${renderResultActionPanel(state, autoAdvance, true)}
         </section>
 
-        <section class="mobile-lower-meta">
-          <section class="summary-card mobile-progress-card">
-            <span class="summary-label">Kategorije</span>
-            <div class="category-progress-strip" aria-label="Kategorije v trenutni črki">
-              ${categoryProgress}
-            </div>
-          </section>
-        </section>
       </section>
 
       <section class="desktop-layout">
@@ -652,11 +605,13 @@ export function renderApp(root, state, alphabet, options = {}) {
                 </div>
               </div>
 
-              <div class="${status.className}">
-                <span class="status-kicker">${status.kicker}</span>
-                <h3 class="status-title">${status.title}</h3>
-                <p class="status-text">${status.text}</p>
-              </div>
+              ${state.round.status === "playing" ? `
+                <div class="${status.className}">
+                  <span class="status-kicker">${status.kicker}</span>
+                  <h3 class="status-title">${status.title}</h3>
+                  <p class="status-text">${status.text}</p>
+                </div>
+              ` : ""}
 
               <div class="keyboard-card">
                 <span class="panel-label">Slovenska tipkovnica</span>
@@ -665,7 +620,7 @@ export function renderApp(root, state, alphabet, options = {}) {
                 </div>
               </div>
 
-              ${state.round.status !== "letter-complete" ? renderActionRow(state, action, false, autoAdvance) : ""}
+              ${renderResultActionPanel(state, autoAdvance, false)}
             </section>
           </div>
         </section>

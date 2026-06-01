@@ -14,11 +14,13 @@ let clearEffectsTimer = 0;
 let categoryTransitionTimer = 0;
 let categoryTransition = null;
 let autoAdvanceTimer = 0;
+let autoAdvanceTicker = 0;
 let autoAdvance = null;
 
 const AUTO_ADVANCE_DELAYS = {
   "word-solved": 2300,
-  "word-failed": 2800
+  "word-failed": 2800,
+  "letter-complete": 3200
 };
 
 function render() {
@@ -29,16 +31,13 @@ function render() {
     autoAdvance
   });
 
-  const letterCompleteDialog = root.querySelector("[data-letter-complete-dialog]");
-  document.body.classList.toggle("has-modal-open", introOpen || Boolean(letterCompleteDialog));
+  document.body.classList.toggle("has-modal-open", introOpen || state.round.status === "game-over");
 
   if (introOpen) {
     const overlay = root.querySelector("[data-intro-overlay]");
     const primaryAction = overlay?.querySelector("[data-intro-primary]");
     const focusable = getIntroFocusableElements(overlay);
     (primaryAction || focusable[0])?.focus();
-  } else {
-    letterCompleteDialog?.querySelector("[data-action='advance']")?.focus();
   }
 }
 
@@ -65,7 +64,9 @@ function clearCategoryTransition() {
 
 function clearAutoAdvance(shouldRender = false) {
   window.clearTimeout(autoAdvanceTimer);
+  window.clearInterval(autoAdvanceTicker);
   autoAdvanceTimer = 0;
+  autoAdvanceTicker = 0;
 
   if (!autoAdvance) {
     return;
@@ -86,13 +87,53 @@ function isCategoryAdvanceTransition() {
   return state.run.currentCategoryIndex < state.run.selectedCategoryIds.length - 1;
 }
 
+function isLetterAdvanceTransition() {
+  return state.round.status === "letter-complete";
+}
+
 function canAutoAdvance() {
   return (
     !introOpen &&
     !categoryTransition &&
-    isCategoryAdvanceTransition() &&
+    (isCategoryAdvanceTransition() || isLetterAdvanceTransition()) &&
     Boolean(AUTO_ADVANCE_DELAYS[state.round.status])
   );
+}
+
+function getAutoAdvanceStatus() {
+  return isLetterAdvanceTransition() ? "next-letter" : "next-category";
+}
+
+function getAutoAdvanceCountdownText() {
+  if (!autoAdvance?.active) {
+    return "";
+  }
+
+  const remaining = Math.max(0, autoAdvance.endsAt - Date.now());
+  const seconds = Math.max(0, Math.ceil(remaining / 1000));
+  return `Čez ${seconds}s`;
+}
+
+function updateAutoAdvanceCountdown() {
+  const countdownText = getAutoAdvanceCountdownText();
+  const countdownElements = root.querySelectorAll("[data-auto-advance-countdown]");
+
+  countdownElements.forEach((element) => {
+    if (element.textContent !== countdownText) {
+      element.textContent = countdownText;
+    }
+  });
+}
+
+function performAdvance() {
+  if (isCategoryAdvanceTransition()) {
+    runCategoryAdvanceTransition();
+    return;
+  }
+
+  clearCategoryTransition();
+  advanceState(state);
+  renderWithEffectsReset();
 }
 
 function syncAutoAdvance() {
@@ -102,31 +143,44 @@ function syncAutoAdvance() {
   }
 
   const delay = AUTO_ADVANCE_DELAYS[state.round.status];
+  const now = Date.now();
   const nextAutoAdvance = {
     active: true,
-    status: state.round.status,
-    text: "Samodejno nadaljevanje …"
+    status: getAutoAdvanceStatus(),
+    delay,
+    startedAt: now,
+    endsAt: now + delay
   };
 
-  if (autoAdvance?.status !== nextAutoAdvance.status) {
+  if (
+    autoAdvance?.status !== nextAutoAdvance.status ||
+    autoAdvance?.endsAt !== nextAutoAdvance.endsAt
+  ) {
     autoAdvance = nextAutoAdvance;
+    updateAutoAdvanceCountdown();
   }
 
-  if (autoAdvanceTimer) {
-    return;
+  if (!autoAdvanceTicker) {
+    autoAdvanceTicker = window.setInterval(() => {
+      if (autoAdvance?.active) {
+        updateAutoAdvanceCountdown();
+      }
+    }, 200);
   }
 
-  autoAdvanceTimer = window.setTimeout(() => {
-    autoAdvanceTimer = 0;
+  if (!autoAdvanceTimer) {
+    autoAdvanceTimer = window.setTimeout(() => {
+      autoAdvanceTimer = 0;
 
-    if (!canAutoAdvance()) {
+      if (!canAutoAdvance()) {
+        clearAutoAdvance();
+        return;
+      }
+
       clearAutoAdvance();
-      return;
-    }
-
-    autoAdvance = null;
-    runCategoryAdvanceTransition();
-  }, delay);
+      performAdvance();
+    }, delay);
+  }
 }
 
 function runCategoryAdvanceTransition() {
@@ -261,14 +315,7 @@ function handleAction(actionOrEvent) {
       return;
     }
 
-    if (isCategoryAdvanceTransition()) {
-      runCategoryAdvanceTransition();
-      return;
-    }
-
-    clearCategoryTransition();
-    advanceState(state);
-    renderWithEffectsReset();
+    performAdvance();
   }
 }
 
