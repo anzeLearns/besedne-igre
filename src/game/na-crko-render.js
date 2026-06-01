@@ -27,6 +27,8 @@ const KEYBOARD_ROWS = [
   ["Y", "X", "C", "V", "B", "N", "M"]
 ];
 
+let categoryImagesPreloaded = false;
+
 function escapeHtml(value) {
   return String(value)
     .replaceAll("&", "&amp;")
@@ -73,7 +75,7 @@ function renderWord(answer, revealedLetters, revealAll, clueLetter, highlightedL
           }
 
           const style = ` style="${styles.join("; ")}"`;
-          return `<span class="letter-slot${isVisible ? " revealed" : ""}${isClue ? " clue" : ""}${isHit ? " hit" : ""}${isHintHit ? " hint-hit" : ""}"${style}>${isVisible ? `${escapeHtml(letter)}${isHit ? '<span class="slot-spark" aria-hidden="true"></span>' : ""}` : ""}</span>`;
+          return `<span class="letter-slot${isVisible ? " revealed" : ""}${isClue ? " clue" : ""}${isHit ? " hit" : ""}${isHintHit ? " hint-hit" : ""}" data-letter="${escapeHtml(letter)}"${style}>${isVisible ? `${escapeHtml(letter)}${isHit ? '<span class="slot-spark" aria-hidden="true"></span>' : ""}` : ""}</span>`;
         })
         .join("");
 
@@ -101,6 +103,18 @@ function renderHintButton(state, compact = false) {
       ${label}
     </button>
   `;
+}
+
+function preloadCategoryImages() {
+  if (categoryImagesPreloaded || typeof Image === "undefined") {
+    return;
+  }
+
+  categoryImagesPreloaded = true;
+  [...Object.values(CATEGORY_SCENE_IMAGES), ...Object.values(CATEGORY_THUMBNAIL_IMAGES)].forEach((src) => {
+    const image = new Image();
+    image.src = src;
+  });
 }
 
 function getPlayingStatusContent(state) {
@@ -362,17 +376,18 @@ function getResultActionContent(state, autoAdvance) {
 
 function renderResultActionPanel(state, autoAdvance = null, compact = false) {
   const content = getResultActionContent(state, autoAdvance);
+  const buttonClassName = `primary-button result-action-button${content.showButton ? "" : " result-action-button-hidden"}`;
+  const detailsHidden = content.details ? "" : ' hidden aria-hidden="true"';
+  const countdownHidden = content.showButton ? "" : ' hidden aria-hidden="true"';
 
   return `
     <section class="${content.className}${compact ? " result-action-panel-compact" : ""}" aria-live="polite">
       <div class="result-action-copy">
-        <p class="result-action-headline">${content.headline}</p>
-        ${content.details ? `<p class="result-action-details">${content.details}</p>` : ""}
-        ${content.showButton ? `<p class="result-action-countdown" data-auto-advance-countdown>${content.countdown}</p>` : ""}
+        <p class="result-action-headline" data-result-headline>${content.headline}</p>
+        <p class="result-action-details" data-result-details${detailsHidden}>${content.details}</p>
+        <p class="result-action-countdown" data-auto-advance-countdown${countdownHidden}>${content.countdown}</p>
       </div>
-      ${content.showButton
-        ? `<button class="primary-button result-action-button" type="button" data-action="advance">Naprej</button>`
-        : '<div class="result-action-button-slot" aria-hidden="true"></div>'}
+      <button class="${buttonClassName}" type="button" data-action="advance" ${content.showButton ? "" : 'tabindex="-1" aria-hidden="true"'}>Naprej</button>
     </section>
   `;
 }
@@ -453,6 +468,105 @@ function getRenderContext(state, autoAdvance = null) {
     highlightedKind,
     autoAdvance
   };
+}
+
+function updateHintButtonElement(button, state, compact = false) {
+  if (!button) {
+    return;
+  }
+
+  const hiddenLetters = getHiddenLetters(state);
+  const isPlaying = state.round.status === "playing";
+  const isUsed = state.run.hintUsedForCurrentLetter || !state.run.hintAvailableForLetter;
+  const isUnneeded = hiddenLetters.length === 0;
+  const disabled = !isPlaying || isUsed || isUnneeded;
+  const className = `hint-button${compact ? " hint-button-compact" : ""}${state.effects.hintRevealedLetter ? " hint-button-used-now" : ""}`;
+
+  if (button.className !== className) {
+    button.className = className;
+  }
+
+  if (button.disabled !== disabled) {
+    button.disabled = disabled;
+  }
+
+  if (button.getAttribute("aria-label") !== "Uporabi pomoč za razkritje ene črke") {
+    button.setAttribute("aria-label", "Uporabi pomoč za razkritje ene črke");
+  }
+
+  if (button.textContent !== "💡 Pomoč") {
+    button.textContent = "💡 Pomoč";
+  }
+}
+
+function updateWordDisplayElement(element, state, context, wordMarkup) {
+  const slots = [...element.querySelectorAll(".letter-slot")];
+  const answerLetters = [...state.round.answer].filter((letter) => letter !== " ");
+
+  if (slots.length !== answerLetters.length) {
+    if (element.innerHTML !== wordMarkup) {
+      element.innerHTML = wordMarkup;
+    }
+    return;
+  }
+
+  let hitIndex = 0;
+  let slotIndex = 0;
+
+  slots.forEach((slot, index) => {
+    const letter = answerLetters[index];
+    const isVisible = context.revealAll || state.round.revealedLetters.has(letter);
+    const isClue = isVisible && letter === state.run.currentLetter;
+    const isHit = isVisible && context.highlightedLetter && letter === context.highlightedLetter;
+    const isHintHit = isHit && context.highlightedKind === "hint";
+    const className = `letter-slot${isVisible ? " revealed" : ""}${isClue ? " clue" : ""}${isHit ? " hit" : ""}${isHintHit ? " hint-hit" : ""}`;
+
+    if (slot.className !== className) {
+      slot.className = className;
+    }
+
+    const slotOrder = String(slotIndex++);
+    if (slot.style.getPropertyValue("--slot-order") !== slotOrder) {
+      slot.style.setProperty("--slot-order", slotOrder);
+    }
+
+    if (isHit) {
+      const stagger = `${hitIndex++ * 70}ms`;
+      if (slot.style.getPropertyValue("--slot-stagger") !== stagger) {
+        slot.style.setProperty("--slot-stagger", stagger);
+      }
+    } else if (slot.style.getPropertyValue("--slot-stagger")) {
+      slot.style.removeProperty("--slot-stagger");
+    }
+
+    if (slot.dataset.letter !== letter) {
+      slot.dataset.letter = letter;
+    }
+
+    const desiredText = isVisible ? letter : "";
+    const firstNode = slot.firstChild;
+    if (firstNode?.nodeType === Node.TEXT_NODE) {
+      if (firstNode.textContent !== desiredText) {
+        firstNode.textContent = desiredText;
+      }
+    } else if (desiredText) {
+      slot.prepend(document.createTextNode(desiredText));
+    }
+
+    const spark = slot.querySelector(".slot-spark");
+    if (isHit && !spark) {
+      const sparkElement = document.createElement("span");
+      sparkElement.className = "slot-spark";
+      sparkElement.setAttribute("aria-hidden", "true");
+      slot.append(sparkElement);
+    } else if (!isHit && spark) {
+      spark.remove();
+    }
+
+    if (!isVisible && slot.firstChild?.nodeType === Node.TEXT_NODE && slot.firstChild.textContent) {
+      slot.firstChild.textContent = "";
+    }
+  });
 }
 
 function updateNodeText(root, selector, text) {
@@ -537,21 +651,24 @@ function updateWordBoards(root, state, context) {
 
   root.querySelectorAll(".word-display").forEach((element) => {
     element.className = `word-display${context.isFailedReveal ? " word-display-revealed" : ""}`;
-    if (element.innerHTML !== wordMarkup) {
-      element.innerHTML = wordMarkup;
-    }
+    updateWordDisplayElement(element, state, context, wordMarkup);
   });
 }
 
 function updateHintButtons(root, state) {
   const mobileFooter = root.querySelector(".mobile-word-footer");
   if (mobileFooter) {
-    mobileFooter.innerHTML = `<p class="mobile-word-helper">${state.round.maxWrongGuesses} napak v tej besedi</p>${renderHintButton(state, true)}`;
+    const helper = mobileFooter.querySelector(".mobile-word-helper");
+    const helperText = `${state.round.maxWrongGuesses} napak v tej besedi`;
+    if (helper && helper.textContent !== helperText) {
+      helper.textContent = helperText;
+    }
+    updateHintButtonElement(mobileFooter.querySelector(".hint-button"), state, true);
   }
 
   const desktopTools = root.querySelector(".word-tools");
   if (desktopTools) {
-    desktopTools.innerHTML = renderHintButton(state);
+    updateHintButtonElement(desktopTools.querySelector(".hint-button"), state, false);
   }
 }
 
@@ -645,15 +762,52 @@ function updateDesktopStatus(root, state, context) {
 }
 
 function updateResultPanels(root, state, autoAdvance) {
-  const mobilePanel = root.querySelector(".mobile-control-zone .result-action-panel");
-  if (mobilePanel) {
-    mobilePanel.outerHTML = renderResultActionPanel(state, autoAdvance, true);
-  }
+  const content = getResultActionContent(state, autoAdvance);
+  root.querySelectorAll(".result-action-panel").forEach((panel) => {
+    const compact = panel.classList.contains("result-action-panel-compact");
+    const nextClassName = `${content.className}${compact ? " result-action-panel-compact" : ""}`;
+    if (panel.className !== nextClassName) {
+      panel.className = nextClassName;
+    }
 
-  const desktopPanel = root.querySelector(".right-stack .result-action-panel");
-  if (desktopPanel) {
-    desktopPanel.outerHTML = renderResultActionPanel(state, autoAdvance, false);
-  }
+    const headline = panel.querySelector("[data-result-headline]");
+    if (headline && headline.textContent !== content.headline) {
+      headline.textContent = content.headline;
+    }
+
+    const details = panel.querySelector("[data-result-details]");
+    if (details) {
+      details.hidden = !content.details;
+      details.setAttribute("aria-hidden", content.details ? "false" : "true");
+      if (details.textContent !== content.details) {
+        details.textContent = content.details;
+      }
+    }
+
+    const countdown = panel.querySelector("[data-auto-advance-countdown]");
+    if (countdown) {
+      countdown.hidden = !content.showButton;
+      countdown.setAttribute("aria-hidden", content.showButton ? "false" : "true");
+      if (countdown.textContent !== content.countdown) {
+        countdown.textContent = content.countdown;
+      }
+    }
+
+    const button = panel.querySelector("[data-action=\"advance\"]");
+    if (button) {
+      const buttonClassName = `primary-button result-action-button${content.showButton ? "" : " result-action-button-hidden"}`;
+      if (button.className !== buttonClassName) {
+        button.className = buttonClassName;
+      }
+      if (content.showButton) {
+        button.removeAttribute("tabindex");
+        button.setAttribute("aria-hidden", "false");
+      } else {
+        button.setAttribute("tabindex", "-1");
+        button.setAttribute("aria-hidden", "true");
+      }
+    }
+  });
 }
 
 function updateDesktopCategoryProgress(root, context) {
@@ -666,6 +820,7 @@ function updateDesktopCategoryProgress(root, context) {
 
 export function renderApp(root, state, alphabet, options = {}) {
   const { isIntroOpen = false, isFirstVisit = false, categoryTransition = null, autoAdvance = null } = options;
+  preloadCategoryImages();
   const context = getRenderContext(state, autoAdvance);
   const transitionPhase = categoryTransition?.phase || "";
   const shellTransitionClass = transitionPhase ? ` category-transition-${transitionPhase}` : "";
