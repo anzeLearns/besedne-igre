@@ -1457,11 +1457,17 @@ button:focus-visible {
 }
 
 .mobile-keyboard-grid {
+  --key-gap: clamp(3px, 1vw, 5px);
+  --key-size: clamp(20.5px, calc((100vw - 102px) / 12), 30px);
   display: grid;
-  gap: 6px;
+  gap: var(--key-gap);
   justify-items: center;
   margin-inline: auto;
   width: min(100%, 420px);
+  padding-inline:
+    max(2px, env(safe-area-inset-left))
+    max(2px, env(safe-area-inset-right));
+  overflow: hidden;
 }
 
 .mobile-keyboard-row,
@@ -1470,6 +1476,10 @@ button:focus-visible {
   justify-content: center;
   gap: 6px;
   width: 100%;
+}
+
+.mobile-keyboard-row {
+  gap: var(--key-gap);
 }
 
 .keyboard-grid {
@@ -1499,8 +1509,7 @@ button:focus-visible {
   transition: transform 140ms ease, filter 140ms ease, opacity 140ms ease;
 }
 
-.keyboard-row:nth-child(2),
-.mobile-keyboard-row:nth-child(2) {
+.keyboard-row:nth-child(2) {
   transform: translateX(8px);
 }
 
@@ -3518,18 +3527,13 @@ button:focus-visible {
     padding: 8px;
   }
 
-  .mobile-keyboard-grid,
-  .mobile-keyboard-row {
-    gap: 4px;
-  }
-
   .mobile-keyboard-card .key-button {
-    min-height: 38px;
-    flex-basis: clamp(24px, 6.8vw, 32px);
-    width: clamp(24px, 6.8vw, 32px);
+    min-height: clamp(36px, 9vw, 44px);
+    flex-basis: var(--key-size);
+    width: var(--key-size);
     min-width: 0;
     border-radius: 999px;
-    font-size: 0.84rem;
+    font-size: clamp(0.78rem, 3.2vw, 1rem);
   }
 
   .mobile-drawing-panel .drawing-top {
@@ -3766,18 +3770,11 @@ button:focus-visible {
     padding: 7px;
   }
 
-  .mobile-keyboard-grid,
-  .mobile-keyboard-row {
-    gap: 3px;
-  }
-
   .mobile-keyboard-card .key-button {
-    min-height: 36px;
-    flex-basis: clamp(23px, 6.6vw, 30px);
-    width: clamp(23px, 6.6vw, 30px);
-    min-width: 0;
-    border-radius: 999px;
-    font-size: 0.8rem;
+    min-height: clamp(36px, 9vw, 44px);
+    flex-basis: var(--key-size);
+    width: var(--key-size);
+    font-size: clamp(0.78rem, 3.2vw, 1rem);
   }
 
   .mobile-drawing-panel .drawing-card-compact {

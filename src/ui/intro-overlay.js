@@ -74,7 +74,8 @@ export function renderIntroOverlay(isFirstVisit) {
             "Beseda se začne na prikazano črko.",
             "Ugibaj črke s tipkovnico.",
             "Če uganeš besedo, greš na naslednjo kategorijo.",
-            "Ko zaključiš vse kategorije pri isti črki, dobiš novo črko."
+            "Ko zaključiš vse kategorije pri isti črki, dobiš novo črko.",
+            "Vsaka nova črka je težja. Prva črka ima 3 kategorije, druga 4, tretja 5, od četrte naprej pa 6."
           ])}
           ${renderRuleItem("❤️", "Življenja in napake", [
             "Začneš s 5 življenji.",

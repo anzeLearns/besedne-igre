@@ -47,56 +47,43 @@ export const PERFECT_LETTER_BONUS = 150;
 
 export const STAGE_CONFIGS = [
   {
-    id: "stage-1",
-    minCompletedLetters: 0,
-    maxCompletedLetters: 0,
+    id: "letter-1",
+    letterNumber: 1,
     categoriesPerLetter: 3,
     categoryPool: ["hrana", "zival", "predmet"],
     allowedDifficulties: ["easy"],
-    fallbackDifficulties: ["easy", "medium"],
     maxAnswerLetters: 5,
     maxMistakes: 6
   },
   {
-    id: "stage-2",
-    minCompletedLetters: 1,
-    maxCompletedLetters: 2,
+    id: "letter-2",
+    letterNumber: 2,
     categoriesPerLetter: 4,
-    categoryPool: ["hrana", "zival", "predmet", "mesto"],
-    allowedDifficulties: ["medium"],
-    fallbackDifficulties: ["easy", "medium"],
-    maxMistakes: 5
+    categoryPool: ["hrana", "zival", "predmet", "drzava"],
+    allowedDifficulties: ["easy", "medium"],
+    maxMistakes: 6
   },
   {
-    id: "stage-3",
-    minCompletedLetters: 3,
-    maxCompletedLetters: 4,
+    id: "letter-3",
+    letterNumber: 3,
     categoriesPerLetter: 5,
-    categoryPool: ["hrana", "zival", "predmet", "mesto", "poklic"],
-    allowedDifficulties: ["hard"],
-    fallbackDifficulties: ["easy", "medium", "hard"],
+    categoryPool: ["hrana", "zival", "predmet", "drzava", "poklic"],
+    allowedDifficulties: ["easy", "medium"],
     maxMistakes: 5
   },
   {
-    id: "stage-4",
-    minCompletedLetters: 5,
-    maxCompletedLetters: Number.POSITIVE_INFINITY,
+    id: "letter-4-plus",
+    letterNumber: 4,
     categoriesPerLetter: 6,
-    categoryPool: ["hrana", "zival", "predmet", "mesto", "poklic", "drzava"],
-    allowedDifficulties: ["hard"],
-    fallbackDifficulties: ["easy", "medium", "hard"],
+    categoryPool: ["hrana", "zival", "predmet", "drzava", "poklic", "mesto"],
+    allowedDifficulties: ["easy", "medium", "hard"],
     maxMistakes: 4
   }
 ];
 
 export function getStageConfig(completedLettersCount) {
-  return (
-    STAGE_CONFIGS.find(
-      (entry) =>
-        completedLettersCount >= entry.minCompletedLetters &&
-        completedLettersCount <= entry.maxCompletedLetters
-    ) || STAGE_CONFIGS[STAGE_CONFIGS.length - 1]
-  );
+  const letterNumber = completedLettersCount + 1;
+  return STAGE_CONFIGS[Math.min(letterNumber, STAGE_CONFIGS.length) - 1];
 }
 
 export function createGameState(profile) {
@@ -166,10 +153,6 @@ export function getMaxAnswerLettersForCompletedLetters(completedLettersCount) {
 
 export function getAllowedDifficultiesForCompletedLetters(completedLettersCount) {
   return getStageConfig(completedLettersCount).allowedDifficulties;
-}
-
-export function getFallbackDifficultiesForCompletedLetters(completedLettersCount) {
-  return getStageConfig(completedLettersCount).fallbackDifficulties;
 }
 
 export function getCategoryPoolForCompletedLetters(completedLettersCount) {

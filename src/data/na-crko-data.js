@@ -81,27 +81,14 @@ const WORDS = {
   },
   mesto: {
     easy: [
-      "ankaran", "bled", "brežice", "celje", "cerknica", "črnomelj", "domžale", "dravograd", "grosuplje", "hrastnik",
-      "idrija", "izola", "jesenice", "kamnik", "kočevje", "koper", "kranj", "krško", "laško", "lendava",
-      "litija", "ljubljana", "logatec", "maribor", "medvode", "metlika", "murska sobota", "ormož", "piran", "postojna",
-      "ptuj", "radovljica", "sevnica", "sežana", "slovenska bistrica", "šoštanj", "škofja loka", "tolmin", "trbovlje",
-      "trebnje", "tržič", "velenje", "vipava", "vrhnika", "zagorje", "žalec", "žiri"
+      "ljubljana", "maribor", "celje", "kranj", "koper", "bled", "piran", "ptuj", "izola", "velenje"
     ],
     medium: [
-      "ajdovščina", "borovnica", "braslovče", "cerklje", "črna na koroškem", "dobrova", "gornja radgona", "hoče",
-      "horjul", "ivančna gorica", "kidričevo", "komenda", "kostanjevica", "kozina", "lovrenc", "lukovica",
-      "mežica", "mirna", "mokronog", "moravče", "naklo", "nazarje", "oplotnica", "pesnica", "polzela",
-      "prebold", "preddvor", "radeče", "radenci", "ravne", "rogaška slatina", "ruše", "semič", "sodražica",
-      "straža", "šempeter", "šentilj", "šentjernej", "šentjur", "šmarje", "velike lašče", "vojnik", "zreče",
-      "žužemberk"
+      "domžale", "kamnik", "novo mesto", "murska sobota", "nova gorica", "trbovlje", "jesenice", "škofja loka",
+      "slovenj gradec"
     ],
     hard: [
-      "apače", "beltinci", "benedikt", "bistrica ob sotli", "bovec", "cankova", "cerkno", "cirkulane", "destrnik",
-      "dobje", "dobrovnik", "dolenjske toplice", "duplek", "gorenja vas", "grad", "hodoš", "ig", "jezersko",
-      "juršinci", "kanal", "kobilje", "komen", "kostel", "križevci", "kungota", "loška dolina", "luče",
-      "majšperk", "markovci", "miren", "mislinja", "moravske toplice", "osilnica", "podčetrtek", "podlehnik",
-      "poljčane", "prevalje", "puconci", "razkrižje", "ribnica", "središče ob dravi", "sveta ana", "sveti jurij",
-      "sveti tomaž", "tabor", "tišina", "turnišče", "velika polana", "veržej", "vitanje"
+      "idrija", "sežana", "tolmin", "kočevje", "črnomelj", "lendava", "žalec", "radovljica", "ilirska bistrica"
     ]
   },
   poklic: {
@@ -181,7 +168,7 @@ export const naCrkoCategories = [
   },
   {
     id: "zival",
-    label: "Živali",
+    label: "Žival",
     icon: "🐾",
     answers: [
       ...entries(WORDS.zival.easy, "easy"),
@@ -200,13 +187,13 @@ export const naCrkoCategories = [
     ]
   },
   {
-    id: "mesto",
-    label: "Mesto",
-    icon: "🏙️",
+    id: "drzava",
+    label: "Država",
+    icon: "🌍",
     answers: [
-      ...entries(WORDS.mesto.easy, "easy"),
-      ...entries(WORDS.mesto.medium, "medium"),
-      ...entries(WORDS.mesto.hard, "hard")
+      ...entries(COUNTRIES.easy, "easy"),
+      ...entries(COUNTRIES.medium, "medium"),
+      ...entries(COUNTRIES.hard, "hard")
     ]
   },
   {
@@ -220,13 +207,13 @@ export const naCrkoCategories = [
     ]
   },
   {
-    id: "drzava",
-    label: "Država",
-    icon: "🌍",
+    id: "mesto",
+    label: "Kraj",
+    icon: "🏙️",
     answers: [
-      ...entries(COUNTRIES.easy, "easy"),
-      ...entries(COUNTRIES.medium, "medium"),
-      ...entries(COUNTRIES.hard, "hard")
+      ...entries(WORDS.mesto.easy, "easy"),
+      ...entries(WORDS.mesto.medium, "medium"),
+      ...entries(WORDS.mesto.hard, "hard")
     ]
   }
 ];

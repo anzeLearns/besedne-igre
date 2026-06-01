@@ -8,7 +8,6 @@ import {
   createEmptyEffects,
   getCategoryCountForCompletedLetters,
   getCategoryPoolForCompletedLetters,
-  getFallbackDifficultiesForCompletedLetters,
   getMaxAnswerLettersForCompletedLetters,
   getMaxWrongGuessesForCompletedLetters,
   getAllowedDifficultiesForCompletedLetters,
@@ -72,48 +71,27 @@ function buildLetterCandidates(state, allowedDifficulties) {
 }
 
 function pickPlayableSetup(state, previousLetter = "") {
-  const defaultDifficulties = getAllowedDifficultiesForCompletedLetters(state.run.completedLettersCount);
-  const fallbackDifficulties = getFallbackDifficultiesForCompletedLetters(state.run.completedLettersCount);
+  const difficulties = getAllowedDifficultiesForCompletedLetters(state.run.completedLettersCount);
+  const candidates = buildLetterCandidates(state, difficulties);
 
-  const modes = [
-    { label: "normal", difficulties: defaultDifficulties },
-    { label: "fallback", difficulties: fallbackDifficulties }
-  ];
-
-  for (const mode of modes) {
-    const candidates = buildLetterCandidates(state, mode.difficulties);
-
-    if (candidates.length === 0) {
-      continue;
-    }
-
+  if (candidates.length > 0) {
     const filtered = candidates.filter((candidate) => candidate.letter !== previousLetter);
     return {
       ...randomItem(filtered.length ? filtered : candidates),
-      difficulties: mode.difficulties,
-      mode: mode.label
+      difficulties,
+      mode: "normal"
     };
   }
 
   state.run.usedAnswers = new Set();
-  const resetCandidates = buildLetterCandidates(state, defaultDifficulties);
+  const resetCandidates = buildLetterCandidates(state, difficulties);
 
   if (resetCandidates.length > 0) {
     const filtered = resetCandidates.filter((candidate) => candidate.letter !== previousLetter);
     return {
       ...randomItem(filtered.length ? filtered : resetCandidates),
-      difficulties: defaultDifficulties,
+      difficulties,
       mode: "reset"
-    };
-  }
-
-  const resetFallbackCandidates = buildLetterCandidates(state, fallbackDifficulties);
-  if (resetFallbackCandidates.length > 0) {
-    const filtered = resetFallbackCandidates.filter((candidate) => candidate.letter !== previousLetter);
-    return {
-      ...randomItem(filtered.length ? filtered : resetFallbackCandidates),
-      difficulties: fallbackDifficulties,
-      mode: "reset-fallback"
     };
   }
 

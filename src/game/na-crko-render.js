@@ -307,8 +307,8 @@ function renderCategoryProgress(state) {
         .filter(Boolean)
         .join(" ");
 
-      const status = isSolved ? "Rešeno" : isFailed ? "Zgrešeno" : isCurrent ? "Trenutno" : "Zaklenjeno";
-      const badge = isSolved ? "✓" : isFailed ? "✕" : isCurrent ? "●" : "🔒";
+      const status = isSolved ? "Rešeno" : isFailed ? "Zgrešeno" : isCurrent ? "Trenutno" : "Sledi";
+      const badge = isSolved ? "✓" : isFailed ? "✕" : isCurrent ? "●" : "→";
 
       return `
         <div class="${className}">
@@ -400,22 +400,6 @@ function renderActionRow(state, action, compact = false, autoAdvance = null) {
         ${action.label}
       </button>
     </div>
-  `;
-}
-
-function renderRulesPanel() {
-  return `
-    <details class="rules-panel">
-      <summary>Točkovanje</summary>
-      <div class="rules-panel-content">
-        <div class="summary-grid">
-          <div class="summary-item"><span>Rešena beseda</span><strong>+100 + bonus napak</strong></div>
-          <div class="summary-item"><span>Črka zaključena</span><strong>+250</strong></div>
-          <div class="summary-item"><span>Popolna črka</span><strong>+150</strong></div>
-          <div class="summary-item"><span>Življenje po črki</span><strong>+1 do največ 5</strong></div>
-        </div>
-      </div>
-    </details>
   `;
 }
 
@@ -556,8 +540,6 @@ export function renderApp(root, state, alphabet, options = {}) {
               ${categoryProgress}
             </div>
           </section>
-
-          ${renderRulesPanel()}
         </section>
       </section>
 
@@ -684,10 +666,6 @@ export function renderApp(root, state, alphabet, options = {}) {
               </div>
 
               ${state.round.status !== "letter-complete" ? renderActionRow(state, action, false, autoAdvance) : ""}
-            </section>
-
-            <section class="progress-card progress-card-collapsible">
-              ${renderRulesPanel()}
             </section>
           </div>
         </section>
