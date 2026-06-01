@@ -88,11 +88,7 @@ function renderHintButton(state, compact = false) {
   const isUsed = state.run.hintUsedForCurrentLetter || !state.run.hintAvailableForLetter;
   const isUnneeded = hiddenLetters.length === 0;
   const disabled = !isPlaying || isUsed || isUnneeded;
-  const label = isUnneeded && !isUsed
-    ? "💡 Pomoč ni več potrebna"
-    : isUsed
-      ? "💡 Pomoč uporabljena"
-      : "💡 Pomoč 1x";
+  const label = "💡 Pomoč";
 
   return `
     <button
@@ -273,11 +269,7 @@ function renderDrawingCard(state, categoryId, compact = false, transition = null
           state.effects.bumpStage,
           compact ? "mobile" : "desktop"
         )}
-        ${
-          state.round.wrongGuessCount === 0
-            ? '<p class="stage-placeholder">Risba se začne ob prvi napaki.</p>'
-            : ""
-        }
+        ${state.round.wrongGuessCount === 0 ? '<p class="stage-placeholder">Risba se začne ob prvi napaki.</p>' : ""}
       </div>
     </div>
   `;
@@ -307,27 +299,23 @@ function renderMobileCategorySpotlight(state, category, progressCurrent, progres
 
 function getAutoAdvanceUi(autoAdvance) {
   if (!autoAdvance?.active) {
-    return {
-      seconds: 0
-    };
+    return { seconds: null };
   }
 
   const remaining = Math.max(0, autoAdvance.endsAt - Date.now());
   const seconds = Math.max(0, Math.ceil(remaining / 1000));
-
-  return {
-    seconds
-  };
+  return { seconds };
 }
 
 function getResultActionContent(state, autoAdvance) {
   const { seconds } = getAutoAdvanceUi(autoAdvance);
+  const countdown = seconds == null ? "" : `Čez ${seconds}s`;
 
   if (state.round.status === "word-solved") {
     return {
       className: "result-action-panel success",
       headline: `✅ Pravilno · +${state.round.pointsAwardedLastStep} točk`,
-      countdown: `Čez ${seconds}s`,
+      countdown,
       details: "",
       showButton: true
     };
@@ -337,7 +325,7 @@ function getResultActionContent(state, autoAdvance) {
     return {
       className: "result-action-panel failure",
       headline: `💔 Ni uspelo · ${escapeHtml(state.round.answer)}`,
-      countdown: `Čez ${seconds}s`,
+      countdown,
       details: "",
       showButton: true
     };
@@ -357,7 +345,7 @@ function getResultActionContent(state, autoAdvance) {
     return {
       className: "result-action-panel reward",
       headline: `⭐ Črka ${state.run.currentLetter} zaključena · +${state.round.lastLetterBonus} točk`,
-      countdown: `Čez ${seconds}s`,
+      countdown,
       details: details.join(" • "),
       showButton: true
     };
@@ -380,13 +368,11 @@ function renderResultActionPanel(state, autoAdvance = null, compact = false) {
       <div class="result-action-copy">
         <p class="result-action-headline">${content.headline}</p>
         ${content.details ? `<p class="result-action-details">${content.details}</p>` : ""}
-        ${
-          content.showButton
-            ? `<p class="result-action-countdown" data-auto-advance-countdown>${content.countdown}</p>`
-            : ""
-        }
+        ${content.showButton ? `<p class="result-action-countdown" data-auto-advance-countdown>${content.countdown}</p>` : ""}
       </div>
-      ${content.showButton ? `<button class="primary-button result-action-button" type="button" data-action="advance">Naprej</button>` : '<div class="result-action-button-slot" aria-hidden="true"></div>'}
+      ${content.showButton
+        ? `<button class="primary-button result-action-button" type="button" data-action="advance">Naprej</button>`
+        : '<div class="result-action-button-slot" aria-hidden="true"></div>'}
     </section>
   `;
 }
@@ -434,8 +420,7 @@ function renderOverlay(state) {
   `;
 }
 
-export function renderApp(root, state, alphabet, options = {}) {
-  const { isIntroOpen = false, isFirstVisit = false, categoryTransition = null, autoAdvance = null } = options;
+function getRenderContext(state, autoAdvance = null) {
   const visibleTotalPoints = state.profile.totalPoints + state.run.runPoints;
   const levelInfo = getLevelInfo(visibleTotalPoints);
   const currentCategory = getCurrentCategory(state);
@@ -448,10 +433,243 @@ export function renderApp(root, state, alphabet, options = {}) {
   const keyboard = renderKeyboard(state);
   const mobileKeyboard = renderMobileKeyboard(state);
   const categoryProgress = renderCategoryProgress(state);
-  const transitionPhase = categoryTransition?.phase || "";
-  const shellTransitionClass = transitionPhase ? ` category-transition-${transitionPhase}` : "";
   const highlightedLetter = state.effects.correctLetter || state.effects.hintRevealedLetter;
   const highlightedKind = state.effects.hintRevealedLetter ? "hint" : "correct";
+
+  return {
+    visibleTotalPoints,
+    levelInfo,
+    currentCategory,
+    status,
+    revealAll,
+    isSolvedReveal,
+    isFailedReveal,
+    progressCurrent,
+    progressTotal,
+    keyboard,
+    mobileKeyboard,
+    categoryProgress,
+    highlightedLetter,
+    highlightedKind,
+    autoAdvance
+  };
+}
+
+function updateNodeText(root, selector, text) {
+  root.querySelectorAll(selector).forEach((element) => {
+    if (element.textContent !== text) {
+      element.textContent = text;
+    }
+  });
+}
+
+function updateHeartsContainers(root, state) {
+  const heartsMarkup = renderHearts(state.run.lives, state.effects.pulseLife, state.round.status);
+  root.querySelectorAll(".mobile-hud-hearts, .lives-row").forEach((element) => {
+    if (element.innerHTML !== heartsMarkup) {
+      element.innerHTML = heartsMarkup;
+    }
+  });
+}
+
+function updateHud(root, state, context) {
+  updateHeartsContainers(root, state);
+  root.querySelectorAll(".mobile-hud-points").forEach((element) => {
+    const nextMarkup = `<span aria-hidden="true">⭐</span> ${context.visibleTotalPoints} točk`;
+    if (element.innerHTML !== nextMarkup) {
+      element.innerHTML = nextMarkup;
+    }
+  });
+  updateNodeText(root, ".points-card .hud-value", String(context.visibleTotalPoints));
+  updateNodeText(root, ".level-card .hud-value", String(context.levelInfo.currentLevel));
+
+  const progressMeta = root.querySelectorAll(".progress-bar-meta");
+  progressMeta.forEach((meta) => {
+    const spans = meta.querySelectorAll("span");
+    if (spans[0]) {
+      spans[0].textContent = `${context.levelInfo.progressValue} / ${context.levelInfo.progressMax}`;
+    }
+    if (spans[1]) {
+      spans[1].textContent = context.levelInfo.nextLevel
+        ? `Stopnja ${context.levelInfo.nextLevel}`
+        : "Najvišja stopnja";
+    }
+  });
+
+  root.querySelectorAll(".progress-bar-fill").forEach((element) => {
+    const width = `${context.levelInfo.progressPercent}%`;
+    if (element.style.width !== width) {
+      element.style.width = width;
+    }
+  });
+
+  const runValues = root.querySelectorAll(".run-mini strong");
+  if (runValues[0]) {
+    runValues[0].textContent = String(state.run.runPoints);
+  }
+  if (runValues[1]) {
+    runValues[1].textContent = String(state.run.completedLettersCount);
+  }
+  if (runValues[2]) {
+    runValues[2].textContent = String(state.profile.bestRunPoints);
+  }
+}
+
+function updateWordBoards(root, state, context) {
+  const wordMarkup = renderWord(
+    state.round.answer,
+    state.round.revealedLetters,
+    context.revealAll,
+    state.run.currentLetter,
+    context.highlightedLetter,
+    context.highlightedKind
+  );
+
+  const mobileBoard = root.querySelector(".mobile-word-board");
+  if (mobileBoard) {
+    mobileBoard.className = `word-board mobile-word-board${context.isSolvedReveal ? " word-board-solved" : ""}${context.isFailedReveal ? " word-board-revealed" : ""}`;
+  }
+
+  const desktopBoard = root.querySelector(".word-board-focused");
+  if (desktopBoard) {
+    desktopBoard.className = `word-board word-board-focused${context.isSolvedReveal ? " word-board-solved" : ""}${context.isFailedReveal ? " word-board-revealed" : ""}`;
+  }
+
+  root.querySelectorAll(".word-display").forEach((element) => {
+    element.className = `word-display${context.isFailedReveal ? " word-display-revealed" : ""}`;
+    if (element.innerHTML !== wordMarkup) {
+      element.innerHTML = wordMarkup;
+    }
+  });
+}
+
+function updateHintButtons(root, state) {
+  const mobileFooter = root.querySelector(".mobile-word-footer");
+  if (mobileFooter) {
+    mobileFooter.innerHTML = `<p class="mobile-word-helper">${state.round.maxWrongGuesses} napak v tej besedi</p>${renderHintButton(state, true)}`;
+  }
+
+  const desktopTools = root.querySelector(".word-tools");
+  if (desktopTools) {
+    desktopTools.innerHTML = renderHintButton(state);
+  }
+}
+
+function updateKeyboardButtons(root, state) {
+  root.querySelectorAll("[data-key]").forEach((button) => {
+    const letter = button.dataset.key;
+    const isCorrect = state.round.revealedLetters.has(letter);
+    const isWrong = state.round.wrongLetters.has(letter);
+    const isClue = letter === state.run.currentLetter && isCorrect;
+    const isUsed = isCorrect || isWrong;
+    const className = [
+      "key-button",
+      isCorrect ? "correct" : "",
+      state.effects.correctLetter === letter ? "correct-hit" : "",
+      isWrong ? "wrong" : "",
+      isClue ? "clue" : "",
+      isUsed ? "locked" : "",
+      state.effects.wrongLetter === letter ? "shake" : ""
+    ]
+      .filter(Boolean)
+      .join(" ");
+
+    if (button.className !== className) {
+      button.className = className;
+    }
+
+    const disabled = state.round.status !== "playing" || isUsed;
+    if (button.disabled !== disabled) {
+      button.disabled = disabled;
+    }
+  });
+}
+
+function updateDrawingPanels(root, state) {
+  root.querySelectorAll(".scene-part").forEach((stageElement) => {
+    const stageNumber = Number(stageElement.dataset.stage || 0);
+    const visible = state.round.wrongGuessCount >= stageNumber;
+    const newest = state.effects.bumpStage && state.round.wrongGuessCount === stageNumber;
+    const baseClasses = stageElement.getAttribute("class").split(" ").filter((className) => {
+      return className !== "visible" && className !== "stage-new";
+    });
+    if (visible) {
+      baseClasses.push("visible");
+    }
+    if (newest) {
+      baseClasses.push("stage-new");
+    }
+    const nextClassName = baseClasses.join(" ");
+    if (stageElement.getAttribute("class") !== nextClassName) {
+      stageElement.setAttribute("class", nextClassName);
+    }
+  });
+
+  root.querySelectorAll(".stage-placeholder").forEach((element) => {
+    element.style.display = state.round.wrongGuessCount === 0 ? "" : "none";
+  });
+
+  root.querySelectorAll(".mistake-pill").forEach((element) => {
+    element.className = `mistake-pill${state.effects.pulseMistakes ? " pulse" : ""}`;
+    element.innerHTML = `Napake: <strong>${state.round.wrongGuessCount} / ${state.round.maxWrongGuesses}</strong>`;
+  });
+
+  root.querySelectorAll(".svg-frame").forEach((element) => {
+    const classParts = element.className.split(" ").filter((className) => className !== "bump");
+    if (state.effects.bumpStage) {
+      classParts.push("bump");
+    }
+    element.className = classParts.join(" ");
+  });
+}
+
+function renderDesktopStatus(state, context) {
+  if (state.round.status !== "playing") {
+    return "";
+  }
+
+  return `
+    <div class="${context.status.className}">
+      <span class="status-kicker">${context.status.kicker}</span>
+      <h3 class="status-title">${context.status.title}</h3>
+      <p class="status-text">${context.status.text}</p>
+    </div>
+  `;
+}
+
+function updateDesktopStatus(root, state, context) {
+  const slot = root.querySelector(".desktop-status-slot");
+  if (slot) {
+    slot.innerHTML = renderDesktopStatus(state, context);
+  }
+}
+
+function updateResultPanels(root, state, autoAdvance) {
+  const mobilePanel = root.querySelector(".mobile-control-zone .result-action-panel");
+  if (mobilePanel) {
+    mobilePanel.outerHTML = renderResultActionPanel(state, autoAdvance, true);
+  }
+
+  const desktopPanel = root.querySelector(".right-stack .result-action-panel");
+  if (desktopPanel) {
+    desktopPanel.outerHTML = renderResultActionPanel(state, autoAdvance, false);
+  }
+}
+
+function updateDesktopCategoryProgress(root, context) {
+  root.querySelectorAll(".desktop-layout .category-progress-strip").forEach((element) => {
+    if (element.innerHTML !== context.categoryProgress) {
+      element.innerHTML = context.categoryProgress;
+    }
+  });
+}
+
+export function renderApp(root, state, alphabet, options = {}) {
+  const { isIntroOpen = false, isFirstVisit = false, categoryTransition = null, autoAdvance = null } = options;
+  const context = getRenderContext(state, autoAdvance);
+  const transitionPhase = categoryTransition?.phase || "";
+  const shellTransitionClass = transitionPhase ? ` category-transition-${transitionPhase}` : "";
+
   root.innerHTML = `
     <div class="shell-glow"></div>
     <main class="game-shell${shellTransitionClass}">
@@ -462,16 +680,16 @@ export function renderApp(root, state, alphabet, options = {}) {
           <div class="mobile-hud-hearts" aria-label="Življenja">
             ${renderHearts(state.run.lives, state.effects.pulseLife, state.round.status)}
           </div>
-          <div class="mobile-hud-points"><span aria-hidden="true">⭐</span> ${visibleTotalPoints} točk</div>
+          <div class="mobile-hud-points"><span aria-hidden="true">⭐</span> ${context.visibleTotalPoints} točk</div>
           ${renderRulesButton(true)}
         </header>
 
         <section class="mobile-main-play">
-          ${renderMobileCategorySpotlight(state, currentCategory, progressCurrent, progressTotal)}
+          ${renderMobileCategorySpotlight(state, context.currentCategory, context.progressCurrent, context.progressTotal)}
 
-          <section class="word-board mobile-word-board${isSolvedReveal ? " word-board-solved" : ""}${isFailedReveal ? " word-board-revealed" : ""}" aria-live="polite" aria-label="Skrita beseda">
-            <div class="word-display${isFailedReveal ? " word-display-revealed" : ""}">
-              ${renderWord(state.round.answer, state.round.revealedLetters, revealAll, state.run.currentLetter, highlightedLetter, highlightedKind)}
+          <section class="word-board mobile-word-board${context.isSolvedReveal ? " word-board-solved" : ""}${context.isFailedReveal ? " word-board-revealed" : ""}" aria-live="polite" aria-label="Skrita beseda">
+            <div class="word-display${context.isFailedReveal ? " word-display-revealed" : ""}">
+              ${renderWord(state.round.answer, state.round.revealedLetters, context.revealAll, state.run.currentLetter, context.highlightedLetter, context.highlightedKind)}
             </div>
             <div class="mobile-word-footer">
               <p class="mobile-word-helper">${state.round.maxWrongGuesses} napak v tej besedi</p>
@@ -480,20 +698,19 @@ export function renderApp(root, state, alphabet, options = {}) {
           </section>
 
           <section class="mobile-drawing-panel">
-            ${renderDrawingCard(state, currentCategory.id, true, categoryTransition)}
+            ${renderDrawingCard(state, context.currentCategory.id, true, categoryTransition)}
           </section>
         </section>
 
         <section class="mobile-control-zone">
           <section class="keyboard-card mobile-keyboard-card">
             <div class="mobile-keyboard-grid" role="group" aria-label="Tipkovnica">
-              ${mobileKeyboard}
+              ${context.mobileKeyboard}
             </div>
           </section>
 
           ${renderResultActionPanel(state, autoAdvance, true)}
         </section>
-
       </section>
 
       <section class="desktop-layout">
@@ -512,7 +729,7 @@ export function renderApp(root, state, alphabet, options = {}) {
             <article class="hud-card level-card">
               <span class="hud-label">Stopnja</span>
               <div class="hud-main">
-                <strong class="hud-value">${levelInfo.currentLevel}</strong>
+                <strong class="hud-value">${context.levelInfo.currentLevel}</strong>
                 <span class="hud-icon" aria-hidden="true">⭐</span>
               </div>
             </article>
@@ -520,7 +737,7 @@ export function renderApp(root, state, alphabet, options = {}) {
             <article class="hud-card points-card">
               <span class="hud-label">Skupne točke</span>
               <div class="hud-main">
-                <strong class="hud-value">${visibleTotalPoints}</strong>
+                <strong class="hud-value">${context.visibleTotalPoints}</strong>
                 <span class="hud-icon" aria-hidden="true">🏆</span>
               </div>
             </article>
@@ -528,11 +745,11 @@ export function renderApp(root, state, alphabet, options = {}) {
             <article class="hud-card">
               <span class="hud-label">Napredek do naslednje stopnje</span>
               <div class="progress-bar-shell" aria-hidden="true">
-                <div class="progress-bar-fill" style="width: ${levelInfo.progressPercent}%"></div>
+                <div class="progress-bar-fill" style="width: ${context.levelInfo.progressPercent}%"></div>
               </div>
               <div class="progress-bar-meta">
-                <span>${levelInfo.progressValue} / ${levelInfo.progressMax}</span>
-                <span>${levelInfo.nextLevel ? `Stopnja ${levelInfo.nextLevel}` : "Najvišja stopnja"}</span>
+                <span>${context.levelInfo.progressValue} / ${context.levelInfo.progressMax}</span>
+                <span>${context.levelInfo.nextLevel ? `Stopnja ${context.levelInfo.nextLevel}` : "Najvišja stopnja"}</span>
               </div>
             </article>
 
@@ -566,13 +783,13 @@ export function renderApp(root, state, alphabet, options = {}) {
         <section class="main-grid">
           <div class="left-stack">
             <section class="game-panel">
-              ${renderDrawingCard(state, currentCategory.id, false, categoryTransition)}
+              ${renderDrawingCard(state, context.currentCategory.id, false, categoryTransition)}
             </section>
 
             <section class="summary-card">
               <span class="summary-label">Kategorije</span>
               <div class="category-progress-strip" aria-label="Kategorije v trenutni črki">
-                ${categoryProgress}
+                ${context.categoryProgress}
               </div>
             </section>
           </div>
@@ -585,38 +802,34 @@ export function renderApp(root, state, alphabet, options = {}) {
                 <div class="current-letter">${state.run.currentLetter}</div>
               </div>
 
-              <div class="category-card ${getCategoryAccentClass(currentCategory.id)}">
+              <div class="category-card ${getCategoryAccentClass(context.currentCategory.id)}">
                 <div class="category-header">
                   <div>
                     <span class="panel-label">KATEGORIJA</span>
-                    <h2 class="category-name">${escapeHtml(currentCategory.label)}</h2>
+                    <h2 class="category-name">${escapeHtml(context.currentCategory.label)}</h2>
                   </div>
-                  <div class="category-icon" aria-hidden="true">${currentCategory.icon}</div>
+                  <div class="category-icon" aria-hidden="true">${context.currentCategory.icon}</div>
                 </div>
-                <div class="category-step">${progressCurrent} / ${progressTotal}</div>
+                <div class="category-step">${context.progressCurrent} / ${context.progressTotal}</div>
               </div>
 
-              <div class="word-board word-board-focused${isSolvedReveal ? " word-board-solved" : ""}${isFailedReveal ? " word-board-revealed" : ""}" aria-live="polite" aria-label="Skrita beseda">
+              <div class="word-board word-board-focused${context.isSolvedReveal ? " word-board-solved" : ""}${context.isFailedReveal ? " word-board-revealed" : ""}" aria-live="polite" aria-label="Skrita beseda">
                 <div class="word-tools">
                   ${renderHintButton(state)}
                 </div>
-                <div class="word-display${isFailedReveal ? " word-display-revealed" : ""}">
-                  ${renderWord(state.round.answer, state.round.revealedLetters, revealAll, state.run.currentLetter, highlightedLetter, highlightedKind)}
+                <div class="word-display${context.isFailedReveal ? " word-display-revealed" : ""}">
+                  ${renderWord(state.round.answer, state.round.revealedLetters, context.revealAll, state.run.currentLetter, context.highlightedLetter, context.highlightedKind)}
                 </div>
               </div>
 
-              ${state.round.status === "playing" ? `
-                <div class="${status.className}">
-                  <span class="status-kicker">${status.kicker}</span>
-                  <h3 class="status-title">${status.title}</h3>
-                  <p class="status-text">${status.text}</p>
-                </div>
-              ` : ""}
+              <div class="desktop-status-slot">
+                ${renderDesktopStatus(state, context)}
+              </div>
 
               <div class="keyboard-card">
                 <span class="panel-label">Slovenska tipkovnica</span>
                 <div class="keyboard-grid" role="group" aria-label="Tipkovnica">
-                  ${keyboard}
+                  ${context.keyboard}
                 </div>
               </div>
 
@@ -630,4 +843,18 @@ export function renderApp(root, state, alphabet, options = {}) {
       ${isIntroOpen ? renderIntroOverlay(isFirstVisit) : ""}
     </main>
   `;
+}
+
+export function updateAppInPlace(root, state, options = {}) {
+  const { autoAdvance = null } = options;
+  const context = getRenderContext(state, autoAdvance);
+
+  updateHud(root, state, context);
+  updateWordBoards(root, state, context);
+  updateHintButtons(root, state);
+  updateKeyboardButtons(root, state);
+  updateDrawingPanels(root, state);
+  updateDesktopStatus(root, state, context);
+  updateResultPanels(root, state, autoAdvance);
+  updateDesktopCategoryProgress(root, context);
 }

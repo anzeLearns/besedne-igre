@@ -1,6 +1,6 @@
 import { advanceState, clearEffects, guessLetter, prepareGame, useHint } from "./game/na-crko-engine.js";
 import { bindKeyboardHandlers } from "./game/na-crko-keyboard.js";
-import { renderApp } from "./game/na-crko-render.js";
+import { renderApp, updateAppInPlace } from "./game/na-crko-render.js";
 import { ALPHABET, createGameState } from "./game/na-crko-state.js";
 import { loadIntroSeen, resetProfile, saveIntroSeen } from "./game/na-crko-storage.js";
 import { getIntroFocusableElements } from "./ui/intro-overlay.js";
@@ -41,9 +41,48 @@ function render() {
   }
 }
 
+function updateInPlace() {
+  updateAppInPlace(root, state, {
+    autoAdvance
+  });
+  document.body.classList.toggle("has-modal-open", introOpen || state.round.status === "game-over");
+}
+
+function getRenderSnapshot() {
+  return {
+    introOpen,
+    currentLetter: state.run.currentLetter,
+    categoryId: state.round.categoryId,
+    currentCategoryIndex: state.run.currentCategoryIndex,
+    selectedCategoryIds: state.run.selectedCategoryIds.join("|"),
+    maxWrongGuesses: state.round.maxWrongGuesses,
+    status: state.round.status
+  };
+}
+
+function canUpdateInPlace(previousSnapshot) {
+  return (
+    !introOpen &&
+    !previousSnapshot.introOpen &&
+    !categoryTransition &&
+    previousSnapshot.status !== "game-over" &&
+    state.round.status !== "game-over" &&
+    previousSnapshot.currentLetter === state.run.currentLetter &&
+    previousSnapshot.categoryId === state.round.categoryId &&
+    previousSnapshot.currentCategoryIndex === state.run.currentCategoryIndex &&
+    previousSnapshot.selectedCategoryIds === state.run.selectedCategoryIds.join("|") &&
+    previousSnapshot.maxWrongGuesses === state.round.maxWrongGuesses
+  );
+}
+
 function renderWithEffectsReset() {
-  render();
+  const previousSnapshot = getRenderSnapshot();
   window.clearTimeout(clearEffectsTimer);
+  if (canUpdateInPlace(previousSnapshot)) {
+    updateInPlace();
+  } else {
+    render();
+  }
 
   const hasEffects = Object.values(state.effects).some(Boolean);
   if (!hasEffects) {
@@ -53,7 +92,11 @@ function renderWithEffectsReset() {
   const effectsDelay = state.effects.hintRevealedLetter || state.effects.hintUnavailable ? 1400 : 420;
   clearEffectsTimer = window.setTimeout(() => {
     clearEffects(state);
-    render();
+    if (canUpdateInPlace(previousSnapshot)) {
+      updateInPlace();
+    } else {
+      render();
+    }
   }, effectsDelay);
 }
 
@@ -87,21 +130,25 @@ function isCategoryAdvanceTransition() {
   return state.run.currentCategoryIndex < state.run.selectedCategoryIds.length - 1;
 }
 
-function isLetterAdvanceTransition() {
-  return state.round.status === "letter-complete";
+function isLetterCompleteTransition() {
+  if (state.round.status !== "word-solved" && state.round.status !== "word-failed") {
+    return false;
+  }
+
+  return state.run.currentCategoryIndex >= state.run.selectedCategoryIds.length - 1;
 }
 
 function canAutoAdvance() {
   return (
     !introOpen &&
     !categoryTransition &&
-    (isCategoryAdvanceTransition() || isLetterAdvanceTransition()) &&
+    (isCategoryAdvanceTransition() || isLetterCompleteTransition()) &&
     Boolean(AUTO_ADVANCE_DELAYS[state.round.status])
   );
 }
 
 function getAutoAdvanceStatus() {
-  return isLetterAdvanceTransition() ? "next-letter" : "next-category";
+  return isLetterCompleteTransition() ? "letter-complete" : "next-category";
 }
 
 function getAutoAdvanceCountdownText() {
@@ -126,6 +173,9 @@ function updateAutoAdvanceCountdown() {
 }
 
 function performAdvance() {
+  const previousSnapshot = getRenderSnapshot();
+  window.clearTimeout(clearEffectsTimer);
+
   if (isCategoryAdvanceTransition()) {
     runCategoryAdvanceTransition();
     return;
@@ -133,7 +183,24 @@ function performAdvance() {
 
   clearCategoryTransition();
   advanceState(state);
-  renderWithEffectsReset();
+  if (canUpdateInPlace(previousSnapshot)) {
+    updateInPlace();
+    window.clearTimeout(clearEffectsTimer);
+    const hasEffects = Object.values(state.effects).some(Boolean);
+    if (hasEffects) {
+      const effectsDelay = state.effects.hintRevealedLetter || state.effects.hintUnavailable ? 1400 : 420;
+      clearEffectsTimer = window.setTimeout(() => {
+        clearEffects(state);
+        if (canUpdateInPlace(previousSnapshot)) {
+          updateInPlace();
+        } else {
+          render();
+        }
+      }, effectsDelay);
+    }
+  } else {
+    renderWithEffectsReset();
+  }
 }
 
 function syncAutoAdvance() {

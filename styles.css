@@ -139,15 +139,11 @@ button:focus-visible {
 }
 
 .drawing-fireflies {
-  z-index: 0;
+  display: none;
 }
 
 .drawing-fireflies::after {
-  content: "";
-  position: absolute;
-  inset: 18% 20% 16%;
-  pointer-events: none;
-  background: radial-gradient(circle, rgba(5, 24, 16, 0.22), rgba(5, 24, 16, 0));
+  display: none;
 }
 
 .drawing-fireflies span {
@@ -561,6 +557,10 @@ button:focus-visible {
   inset: 0;
   pointer-events: none;
   background: linear-gradient(180deg, rgba(255, 255, 255, 0.06), transparent 40%);
+}
+
+.drawing-card::after {
+  display: none;
 }
 
 .hud-label,
@@ -1225,12 +1225,10 @@ button:focus-visible {
 
 .drawing-card {
   padding: 12px;
-  background:
-    radial-gradient(circle at 50% 100%, rgba(73, 153, 96, 0.09), transparent 10rem),
-    linear-gradient(180deg, rgba(6, 31, 23, 0.9), rgba(3, 21, 15, 0.96));
+  background: transparent;
   box-shadow:
-    inset 0 0 0 1px rgba(134, 208, 124, 0.055),
-    0 14px 30px rgba(0, 0, 0, 0.2);
+    inset 0 0 0 1px rgba(134, 208, 124, 0.04),
+    0 14px 30px rgba(0, 0, 0, 0.18);
 }
 
 .drawing-card-compact {
@@ -1287,10 +1285,8 @@ button:focus-visible {
   border-radius: 24px;
   overflow: hidden;
   padding: 0;
-  background: linear-gradient(180deg, rgba(4, 29, 22, 0.72), rgba(4, 22, 15, 0.86));
-  box-shadow:
-    inset 0 0 0 1px rgba(189, 213, 93, 0.12),
-    0 12px 28px rgba(0, 0, 0, 0.2);
+  background: transparent;
+  box-shadow: none;
 }
 
 .drawing-background {
@@ -1313,25 +1309,7 @@ button:focus-visible {
 
 .drawing-background::before,
 .drawing-background::after {
-  content: "";
-  position: absolute;
-  inset: 0;
-  pointer-events: none;
-}
-
-.drawing-background::before {
-  background:
-    linear-gradient(180deg, rgba(255, 255, 255, 0.06), transparent 20%),
-    radial-gradient(circle at 50% 62%, rgba(244, 197, 66, 0.1), transparent 24%),
-    linear-gradient(180deg, rgba(7, 40, 32, 0.04), transparent 28%);
-}
-
-.drawing-background::after {
-  background:
-    linear-gradient(180deg, rgba(3, 14, 10, 0.02), rgba(3, 14, 10, 0.12)),
-    radial-gradient(circle at 14% 20%, rgba(255, 227, 112, 0.5) 0 2px, transparent 3px),
-    radial-gradient(circle at 86% 28%, rgba(255, 227, 112, 0.45) 0 2px, transparent 3px),
-    radial-gradient(circle at 78% 72%, rgba(255, 227, 112, 0.5) 0 3px, transparent 4px);
+  display: none;
 }
 
 .left-stack .svg-frame {
@@ -1382,19 +1360,7 @@ button:focus-visible {
 }
 
 .stage-placeholder {
-  position: absolute;
-  left: 50%;
-  bottom: 16px;
-  width: min(240px, calc(100% - 32px));
-  margin: 0;
-  color: rgba(255, 248, 232, 0.72);
-  font-size: 0.88rem;
-  font-weight: 800;
-  line-height: 1.35;
-  text-align: center;
-  transform: translateX(-50%);
-  pointer-events: none;
-  z-index: 2;
+  display: none;
 }
 
 .hangman-scene {
@@ -1405,6 +1371,7 @@ button:focus-visible {
   width: 100%;
   height: 100%;
   pointer-events: none;
+  background: transparent;
 }
 
 .scene-part {
@@ -1447,23 +1414,23 @@ button:focus-visible {
 }
 
 .mobile-keyboard-card {
-  padding: 10px;
+  padding: 8px 6px;
   background:
     radial-gradient(circle at 50% 0%, rgba(154, 210, 81, 0.1), transparent 46%),
     linear-gradient(180deg, rgba(8, 52, 31, 0.98), rgba(4, 27, 17, 0.98));
 }
 
 .mobile-keyboard-grid {
-  --key-gap: clamp(3px, 1vw, 5px);
-  --key-size: clamp(20.5px, calc((100vw - 102px) / 12), 30px);
+  --key-gap: clamp(4px, 1.1vw, 6px);
+  --key-size: clamp(21px, calc((100% - (var(--key-gap) * 11)) / 12), 34px);
   display: grid;
   gap: var(--key-gap);
   justify-items: center;
   margin-inline: auto;
-  width: min(100%, 420px);
-  padding-inline:
-    max(2px, env(safe-area-inset-left))
-    max(2px, env(safe-area-inset-right));
+  width: min(100%, 460px);
+  max-width: calc(100vw - 12px);
+  padding-inline: 0;
+  box-sizing: border-box;
   overflow: hidden;
 }
 
@@ -1477,6 +1444,7 @@ button:focus-visible {
 
 .mobile-keyboard-row {
   gap: var(--key-gap);
+  box-sizing: border-box;
 }
 
 .keyboard-grid {
@@ -3642,7 +3610,7 @@ button:focus-visible {
   }
 
   .mobile-keyboard-card {
-    padding: 8px;
+    padding: 7px 5px;
   }
 
   .mobile-keyboard-card .key-button {
@@ -3868,7 +3836,7 @@ button:focus-visible {
   }
 
   .mobile-keyboard-card {
-    padding: 7px;
+    padding: 6px 4px;
   }
 
   .mobile-keyboard-card .key-button {
@@ -4364,7 +4332,7 @@ button:focus-visible {
     padding: 0;
     border-color: rgba(126, 123, 213, 0.28);
     border-radius: 22px;
-    background: #11143c;
+    background: transparent;
     box-shadow: 0 14px 26px rgba(0, 0, 0, 0.26);
   }
 
@@ -4376,7 +4344,7 @@ button:focus-visible {
   }
 
   .mobile-keyboard-card {
-    padding: 8px 7px;
+    padding: 7px 5px;
     border-color: rgba(115, 110, 199, 0.22);
     border-radius: 22px;
     background:
@@ -4613,7 +4581,7 @@ button:focus-visible {
 
   .mobile-layout .drawing-card-compact {
     border-color: rgba(134, 208, 124, 0.2);
-    background: #0a281b;
+    background: transparent;
   }
 
   .mobile-keyboard-card {
