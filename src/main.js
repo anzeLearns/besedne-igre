@@ -23,6 +23,17 @@ const AUTO_ADVANCE_DELAYS = {
   "letter-complete": 3200
 };
 
+function shouldSkipAnimatedCategoryTransition() {
+  if (typeof navigator === "undefined") {
+    return false;
+  }
+
+  const userAgent = navigator.userAgent || "";
+  const isAppleMobile = /iPhone|iPad|iPod/.test(userAgent);
+  const isWebKit = /WebKit/.test(userAgent) && !/CriOS|FxiOS|EdgiOS/.test(userAgent);
+  return isAppleMobile && isWebKit;
+}
+
 function render() {
   renderApp(root, state, ALPHABET, {
     isIntroOpen: introOpen,
@@ -255,6 +266,13 @@ function runCategoryAdvanceTransition() {
   clearAutoAdvance();
   clearCategoryTransition();
   window.clearTimeout(clearEffectsTimer);
+
+  if (shouldSkipAnimatedCategoryTransition()) {
+    advanceState(state);
+    renderWithEffectsReset();
+    return;
+  }
+
   categoryTransition = {
     phase: "out",
     previousCategoryId
