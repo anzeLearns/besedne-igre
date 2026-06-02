@@ -311,6 +311,25 @@ function renderMobileCategorySpotlight(state, category, progressCurrent, progres
   `;
 }
 
+function renderDesktopCategorySpotlight(state, category, progressCurrent, progressTotal) {
+  const thumbnailImage = CATEGORY_THUMBNAIL_IMAGES[category.id] || CATEGORY_THUMBNAIL_IMAGES.predmet;
+
+  return `
+    <section class="desktop-category-spotlight ${getCategoryAccentClass(category.id)}" aria-label="Trenutna kategorija">
+      <div class="desktop-category-thumbnail" style="--category-thumbnail: url('${thumbnailImage}')" aria-hidden="true"></div>
+      <div class="desktop-category-copy">
+        <span class="panel-label">Kategorija</span>
+        <h2 class="desktop-category-name">${escapeHtml(category.label)}</h2>
+        <p class="desktop-category-meta">
+          <span>Črka <strong>${state.run.currentLetter}</strong></span>
+          <span aria-hidden="true">•</span>
+          <span>${progressCurrent}/${progressTotal}</span>
+        </p>
+      </div>
+    </section>
+  `;
+}
+
 function getAutoAdvanceUi(autoAdvance) {
   if (!autoAdvance?.active) {
     return { seconds: null };
@@ -365,11 +384,13 @@ function getResultActionContent(state, autoAdvance) {
     };
   }
 
+  const status = getPlayingStatusContent(state);
+
   return {
     className: "result-action-panel idle",
-    headline: "Ugani besedo.",
+    headline: status.title,
     countdown: "",
-    details: "Izberi črko.",
+    details: status.text,
     showButton: false
   };
 }
@@ -740,27 +761,6 @@ function updateDrawingPanels(root, state) {
   });
 }
 
-function renderDesktopStatus(state, context) {
-  if (state.round.status !== "playing") {
-    return "";
-  }
-
-  return `
-    <div class="${context.status.className}">
-      <span class="status-kicker">${context.status.kicker}</span>
-      <h3 class="status-title">${context.status.title}</h3>
-      <p class="status-text">${context.status.text}</p>
-    </div>
-  `;
-}
-
-function updateDesktopStatus(root, state, context) {
-  const slot = root.querySelector(".desktop-status-slot");
-  if (slot) {
-    slot.innerHTML = renderDesktopStatus(state, context);
-  }
-}
-
 function updateResultPanels(root, state, autoAdvance) {
   const content = getResultActionContent(state, autoAdvance);
   root.querySelectorAll(".result-action-panel").forEach((panel) => {
@@ -870,68 +870,71 @@ export function renderApp(root, state, alphabet, options = {}) {
 
       <section class="desktop-layout">
         <header class="hero-header">
-          <section class="brand-card">
-            <div class="brand-head">
+          <section class="hud-unified">
+            <section class="brand-card">
               <div class="brand-copy">
                 <h1 class="brand-title">Vislice Na črko</h1>
                 <p class="brand-subtitle">Preživi niz kategorij, lovi bonus za popolno črko in zgradi čim višjo stopnjo.</p>
               </div>
+            </section>
+
+            <section class="hud-grid" aria-label="Statistika igre">
+              <article class="hud-card level-card">
+                <span class="hud-label">Stopnja</span>
+                <div class="hud-main">
+                  <strong class="hud-value">${context.levelInfo.currentLevel}</strong>
+                  <span class="hud-icon" aria-hidden="true">⭐</span>
+                </div>
+              </article>
+
+              <article class="hud-card points-card">
+                <span class="hud-label">Skupne točke</span>
+                <div class="hud-main">
+                  <strong class="hud-value">${context.visibleTotalPoints}</strong>
+                  <span class="hud-icon" aria-hidden="true">🏆</span>
+                </div>
+              </article>
+
+              <article class="hud-card">
+                <span class="hud-label">Napredek do naslednje stopnje</span>
+                <div class="progress-bar-shell" aria-hidden="true">
+                  <div class="progress-bar-fill" style="width: ${context.levelInfo.progressPercent}%"></div>
+                </div>
+                <div class="progress-bar-meta">
+                  <span>${context.levelInfo.progressValue} / ${context.levelInfo.progressMax}</span>
+                  <span>${context.levelInfo.nextLevel ? `Stopnja ${context.levelInfo.nextLevel}` : "Najvišja stopnja"}</span>
+                </div>
+              </article>
+
+              <article class="hud-card">
+                <span class="hud-label">Življenja</span>
+                <div class="lives-row" aria-label="Preostala življenja">
+                  ${renderHearts(state.run.lives, state.effects.pulseLife, state.round.status)}
+                </div>
+              </article>
+
+              <article class="hud-card hud-card-compact">
+                <span class="hud-label">Tek</span>
+                <div class="run-mini-grid">
+                  <div class="run-mini">
+                    <span class="hud-label">Ta igra</span>
+                    <strong>${state.run.runPoints}</strong>
+                  </div>
+                  <div class="run-mini">
+                    <span class="hud-label">Črke</span>
+                    <strong>${state.run.completedLettersCount}</strong>
+                  </div>
+                  <div class="run-mini">
+                    <span class="hud-label">Rekord</span>
+                    <strong>${state.profile.bestRunPoints}</strong>
+                  </div>
+                </div>
+              </article>
+            </section>
+
+            <div class="hud-rules">
               ${renderRulesButton()}
             </div>
-          </section>
-
-          <section class="hud-grid" aria-label="Statistika igre">
-            <article class="hud-card level-card">
-              <span class="hud-label">Stopnja</span>
-              <div class="hud-main">
-                <strong class="hud-value">${context.levelInfo.currentLevel}</strong>
-                <span class="hud-icon" aria-hidden="true">⭐</span>
-              </div>
-            </article>
-
-            <article class="hud-card points-card">
-              <span class="hud-label">Skupne točke</span>
-              <div class="hud-main">
-                <strong class="hud-value">${context.visibleTotalPoints}</strong>
-                <span class="hud-icon" aria-hidden="true">🏆</span>
-              </div>
-            </article>
-
-            <article class="hud-card">
-              <span class="hud-label">Napredek do naslednje stopnje</span>
-              <div class="progress-bar-shell" aria-hidden="true">
-                <div class="progress-bar-fill" style="width: ${context.levelInfo.progressPercent}%"></div>
-              </div>
-              <div class="progress-bar-meta">
-                <span>${context.levelInfo.progressValue} / ${context.levelInfo.progressMax}</span>
-                <span>${context.levelInfo.nextLevel ? `Stopnja ${context.levelInfo.nextLevel}` : "Najvišja stopnja"}</span>
-              </div>
-            </article>
-
-            <article class="hud-card">
-              <span class="hud-label">Življenja</span>
-              <div class="lives-row" aria-label="Preostala življenja">
-                ${renderHearts(state.run.lives, state.effects.pulseLife, state.round.status)}
-              </div>
-            </article>
-
-            <article class="hud-card hud-card-compact">
-              <span class="hud-label">Tek</span>
-              <div class="run-mini-grid">
-                <div class="run-mini">
-                  <span class="hud-label">Ta igra</span>
-                  <strong>${state.run.runPoints}</strong>
-                </div>
-                <div class="run-mini">
-                  <span class="hud-label">Črke</span>
-                  <strong>${state.run.completedLettersCount}</strong>
-                </div>
-                <div class="run-mini">
-                  <span class="hud-label">Rekord</span>
-                  <strong>${state.profile.bestRunPoints}</strong>
-                </div>
-              </div>
-            </article>
           </section>
         </header>
 
@@ -940,33 +943,11 @@ export function renderApp(root, state, alphabet, options = {}) {
             <section class="game-panel">
               ${renderDrawingCard(state, context.currentCategory.id, false, categoryTransition)}
             </section>
-
-            <section class="summary-card">
-              <span class="summary-label">Kategorije</span>
-              <div class="category-progress-strip" aria-label="Kategorije v trenutni črki">
-                ${context.categoryProgress}
-              </div>
-            </section>
           </div>
 
           <div class="right-stack">
             <section class="game-panel">
-              <div class="letter-card">
-                ${renderAmbientSparks("letter-fireflies")}
-                <span class="panel-label">Črka</span>
-                <div class="current-letter">${state.run.currentLetter}</div>
-              </div>
-
-              <div class="category-card ${getCategoryAccentClass(context.currentCategory.id)}">
-                <div class="category-header">
-                  <div>
-                    <span class="panel-label">KATEGORIJA</span>
-                    <h2 class="category-name">${escapeHtml(context.currentCategory.label)}</h2>
-                  </div>
-                  <div class="category-icon" aria-hidden="true">${context.currentCategory.icon}</div>
-                </div>
-                <div class="category-step">${context.progressCurrent} / ${context.progressTotal}</div>
-              </div>
+              ${renderDesktopCategorySpotlight(state, context.currentCategory, context.progressCurrent, context.progressTotal)}
 
               <div class="word-board word-board-focused${context.isSolvedReveal ? " word-board-solved" : ""}${context.isFailedReveal ? " word-board-revealed" : ""}" aria-live="polite" aria-label="Skrita beseda">
                 <div class="word-tools">
@@ -975,10 +956,6 @@ export function renderApp(root, state, alphabet, options = {}) {
                 <div class="word-display${context.isFailedReveal ? " word-display-revealed" : ""}">
                   ${renderWord(state.round.answer, state.round.revealedLetters, context.revealAll, state.run.currentLetter, context.highlightedLetter, context.highlightedKind)}
                 </div>
-              </div>
-
-              <div class="desktop-status-slot">
-                ${renderDesktopStatus(state, context)}
               </div>
 
               <div class="keyboard-card">
@@ -1009,7 +986,6 @@ export function updateAppInPlace(root, state, options = {}) {
   updateHintButtons(root, state);
   updateKeyboardButtons(root, state);
   updateDrawingPanels(root, state);
-  updateDesktopStatus(root, state, context);
   updateResultPanels(root, state, autoAdvance);
   updateDesktopCategoryProgress(root, context);
 }

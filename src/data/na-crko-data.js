@@ -21,12 +21,11 @@ const WORDS = {
       "sladoled", "smetana", "špinača", "testenine", "vanilija", "zavitek", "zelenjava", "žganci"
     ],
     hard: [
-      "ajdovi žganci", "baklava", "brancin", "brstični ohrovt", "bučno olje", "carski praženec", "čemaž", "črni kruh",
-      "dagnje", "dušeno zelje", "gobova juha", "hobotnica", "idrijski žlikrofi", "jagenjček", "kajmak", "kisla repa",
-      "kislo mleko", "kranjska klobasa", "kremna rezina", "kuskus", "lečina enolončnica", "losos", "matevž",
-      "nadevana paprika", "ocvrti sir", "pehtranova potica", "pirin kruh", "polnjeni lignji", "prekmurska gibanica",
-      "račja prsa", "ričet", "sirovi štruklji", "skuša", "sojina omaka", "šparglji", "tatar omaka", "telečja obara",
-      "tunina solata", "vampi", "zajčja obara", "zeliščni namaz", "žolca"
+      "baklava", "brancin", "brodet", "brusketa", "čemaž", "dagnje", "falafel", "focaccia", "frtalja", "fuži",
+      "gibanica", "gorgonzola", "hobotnica", "hummus", "jagenjček", "kajmak", "kapre", "karamela", "kaviar",
+      "kimči", "koromač", "kuskus", "losos", "matevž", "medenjaki", "mineštra", "mojito", "njoki", "ocvirki",
+      "ohrovt", "oljivada", "omleta", "papardele", "pašticada", "piadina", "pitaja", "pršut", "ramstek", "ričet",
+      "rožmarin", "sardoni", "skuša", "sufle", "šafran", "šparglji", "tataki", "tempura", "tiramisu", "žolca"
     ]
   },
   zival: {
@@ -45,12 +44,11 @@ const WORDS = {
       "žirafa", "žolna"
     ],
     hard: [
-      "akvarijska riba", "beloglavi jastreb", "belouška", "brkata sinica", "črna štorklja", "domači prašič",
-      "evrazijski ris", "glavata kareta", "gozdna sova", "hribski škrjanec", "indijski slon", "istrski osel",
-      "jadranska sardela", "kozorog", "kraški ovčar", "mala podlasica", "močerad", "morska zvezda", "navadni jelen",
-      "navadni močerad", "navadna postrv", "planinski orel", "planinski močerad", "poljski zajec", "pritlikavi kunec",
-      "rdeča lisica", "rečna vidra", "rjavi medved", "rumena pastirica", "sivi volk", "sladkovodni rak", "smrdokavra",
-      "stepski dihur", "šarenka", "velika uharica", "vodna želva", "zelena rega", "zlati šakal"
+      "belouška", "človeška ribica", "dihur", "divokoza", "gad", "gaur", "gekon", "gibon", "glista", "goral",
+      "ibis", "kačji pastir", "kakadu", "kapibara", "kasuar", "kozorog", "leming", "mandril", "mantaraja",
+      "močerad", "narval", "netopir", "noj", "okapi", "oposum", "ornitorink", "pasavec", "pegatka",
+      "pelikan", "podlasica", "potočnica", "sipa", "smrdokavra", "surikata", "šarenka", "tapir", "termit",
+      "uharica", "vidrica", "vombat", "vrana", "zlatovranka", "žerjav", "žličarka", "ždral"
     ]
   },
   predmet: {
@@ -69,14 +67,12 @@ const WORDS = {
       "zapestnica", "zobna ščetka", "zvočnik", "žarnica"
     ],
     hard: [
-      "bliskovni pogon", "brusilni papir", "čistilna krpa", "daljnogled", "domači tiskalnik", "električna krtačka",
-      "električni grelnik", "gasilni aparat", "gramofonska plošča", "hidravlična dvigalka", "izvijač", "keramična posoda",
-      "klimatska naprava", "kovinska sponka", "kuhinjska tehtnica", "laserski tiskalnik", "merilni trak", "mikrovalovna pečica",
-      "nakupovalna vrečka", "namizna svetilka", "obesek za ključe", "odpirač za steklenice", "otroški voziček",
-      "papirnata brisača", "pisarniški stol", "plastična posoda", "pomivalni stroj", "prenosni računalnik", "razdelilna letev",
-      "rezalna deska", "rezervni ključ", "ročni mešalnik", "sedežna blazina", "senzorska luč", "stekleni kozarec",
-      "sušilni stroj", "šivalni stroj", "športna torba", "termovka", "varnostni pas", "vodna tehtnica", "vrtna cev",
-      "zaščitna očala", "žepni nož"
+      "daljnogled", "detektor", "diktafon", "drobilnik", "gasilnik", "gramofon", "harmonika", "izvijač", "kalkulator",
+      "kandela", "karabin", "kaseta", "kompas", "kompresor", "konvektor", "kuhalnik", "mikroskop",
+      "monitor", "multimeter", "napenjalec", "nitkovnik", "odpirač", "pasomerec", "pečica", "pladenj",
+      "podstavek", "projektor", "radirka", "razpršilec", "reflektor", "skalpel", "spenjač", "stativ",
+      "stružilo", "sušilec", "termovka", "tlakomer", "transformator", "trinožnik", "usmerjevalnik",
+      "varovalka", "ventilator", "zibka", "žepnik", "žiroskop", "žličnik"
     ]
   },
   mesto: {
@@ -108,14 +104,12 @@ const WORDS = {
       "zobotehnik", "železničar"
     ],
     hard: [
-      "aktuarski analitik", "anesteziolog", "arheolog", "avdiolog", "biokemik", "čebelarski mojster", "dermatolog",
-      "družinski terapevt", "elektroinženir", "energetski svetovalec", "farmacevtski tehnik", "fizioterapevt",
-      "geoinformatik", "gozdarski inženir", "hidrolog", "ilustrator", "izvršitelj", "kardiolog", "kemijski tehnolog",
-      "klinični psiholog", "konservator", "kriminalist", "letalski mehanik", "medicinski biokemik", "mikrobiolog",
-      "nepremičninski posrednik", "nevrolog", "okoljski inženir", "ortodont", "pediater", "projektant", "radiolog",
-      "restavrator", "revizor", "scenograf", "sistemski administrator", "sodni izvedenec", "specialni pedagog",
-      "strojni inženir", "športni fizioterapevt", "urbanist", "varnostni inženir", "veterinarski tehnik",
-      "vodja gradbišča", "zdravstveni tehnik", "zobni asistent"
+      "anesteziolog", "arheolog", "avdiolog", "biokemik", "dermatolog", "dietetik", "epidemiolog", "farmakolog",
+      "fizioterapevt", "geoinformatik", "hidrolog", "ilustrator", "imunolog", "infektolog", "izvršitelj", "kardiolog",
+      "konservator", "kriminalist", "leksikograf", "mikrobiolog", "montažer", "nevrolog", "oftalmolog", "onkolog",
+      "optometrist", "ortodont", "pediater", "perfuzionist", "pilot", "projektant", "radiolog", "reševalec",
+      "restavrator", "revizor", "scenograf", "sodnomedicinar", "statistik", "strojevodja", "surdopedagog",
+      "toksikolog", "urbanist", "urolog", "vulkanolog", "žerjavist", "živilotec", "živinorejec"
     ]
   }
 };
