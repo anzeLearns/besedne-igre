@@ -886,6 +886,18 @@ button:focus-visible {
   min-height: 188px;
 }
 
+.word-tools {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.word-tools-spacer {
+  flex: 1 1 0;
+  min-width: 0;
+}
+
 .word-board-revealed {
   background:
     radial-gradient(circle at 50% 18%, rgba(255, 186, 154, 0.08), transparent 34%),
@@ -917,6 +929,9 @@ button:focus-visible {
   align-content: center;
   gap: 10px 9px;
   min-height: 112px;
+  width: 100%;
+  max-width: 100%;
+  overflow: hidden;
 }
 
 .word-display-revealed .letter-slot {
@@ -943,6 +958,8 @@ button:focus-visible {
   justify-content: center;
   gap: 9px;
   width: 100%;
+  max-width: 100%;
+  min-width: 0;
 }
 
 .letter-slot {
@@ -4923,15 +4940,19 @@ button:focus-visible {
 
   .left-stack .svg-frame {
     align-items: flex-end;
+    --hangman-scale: 1.42;
+    --hangman-x: 46%;
+    --hangman-y: 6.25%;
   }
 
   .left-stack .svg-frame .hangman-scene {
     position: absolute;
-    left: 50%;
+    left: var(--hangman-x, 50%);
     right: auto;
-    bottom: 1.5%;
-    width: 112%;
-    height: 96%;
+    bottom: var(--hangman-y, 1.5%);
+    width: calc(100% * var(--hangman-scale, 1));
+    height: auto;
+    max-height: calc(100% * var(--hangman-scale, 1));
     transform: translateX(-50%);
     transform-origin: bottom center;
   }
@@ -5136,11 +5157,13 @@ button:focus-visible {
   }
 
   .word-tools {
-    margin: 0 0 2px;
+    margin: 0 0 8px;
+    min-height: 42px;
   }
 
   .word-display {
     min-height: 126px;
+    gap: 10px 8px;
   }
 
   .word-board-focused .letter-slot {
@@ -5380,10 +5403,12 @@ button:focus-visible {
 
   .word-board-focused {
     min-height: 214px;
+    padding: 18px 20px 20px;
   }
 
   .word-display {
     min-height: 142px;
+    gap: 10px 8px;
   }
 
   .key-button {
@@ -5740,12 +5765,66 @@ button:focus-visible {
 
   .word-display {
     min-height: 178px;
+    gap: 12px 9px;
   }
 
   .word-board-focused .letter-slot {
     width: clamp(48px, 4.95vw, 74px);
     height: clamp(72px, 6.7vw, 94px);
     font-size: clamp(2.94rem, 4.2vw, 3.96rem);
+  }
+
+  .word-board-focused.word-length-medium .word-display {
+    gap: 10px 8px;
+  }
+
+  .word-board-focused.word-length-medium .word-row {
+    gap: 8px;
+  }
+
+  .word-board-focused.word-length-medium .letter-slot {
+    width: clamp(44px, 4.45vw, 66px);
+    height: clamp(68px, 6.2vw, 88px);
+    font-size: clamp(2.62rem, 3.8vw, 3.54rem);
+  }
+
+  .word-board-focused.word-length-long .word-display {
+    gap: 8px 6px;
+  }
+
+  .word-board-focused.word-length-long .word-row {
+    gap: 6px;
+  }
+
+  .word-board-focused.word-length-long .letter-slot {
+    width: clamp(36px, 3.75vw, 58px);
+    height: clamp(62px, 5.5vw, 80px);
+    min-width: 0;
+    font-size: clamp(2.18rem, 3.14vw, 3.1rem);
+    border-bottom-width: 4px;
+  }
+
+  .word-board-focused.word-length-very-long .word-display {
+    gap: 7px 5px;
+  }
+
+  .word-board-focused.word-length-very-long .word-row {
+    gap: 5px;
+  }
+
+  .word-board-focused.word-length-very-long .letter-slot {
+    width: clamp(32px, 3.28vw, 52px);
+    height: clamp(56px, 5vw, 74px);
+    min-width: 0;
+    font-size: clamp(1.92rem, 2.74vw, 2.7rem);
+    border-bottom-width: 4px;
+  }
+
+  .word-board-focused .hint-button {
+    position: static;
+    flex: 0 0 auto;
+    margin-left: auto;
+    max-width: 100%;
   }
 
   .keyboard-card {
@@ -5844,6 +5923,9 @@ button:focus-visible {
 
   .left-stack .svg-frame {
     min-height: 710px;
+    --hangman-scale: 1.36;
+    --hangman-x: 45.5%;
+    --hangman-y: 6.5%;
   }
 
   .desktop-category-spotlight {
@@ -5871,6 +5953,24 @@ button:focus-visible {
     width: clamp(50px, 5vw, 78px);
     height: clamp(76px, 6.8vw, 98px);
     font-size: clamp(3.08rem, 4.25vw, 4.1rem);
+  }
+
+  .word-board-focused.word-length-medium .letter-slot {
+    width: clamp(46px, 4.5vw, 70px);
+    height: clamp(72px, 6.2vw, 92px);
+    font-size: clamp(2.78rem, 3.86vw, 3.62rem);
+  }
+
+  .word-board-focused.word-length-long .letter-slot {
+    width: clamp(39px, 3.85vw, 62px);
+    height: clamp(64px, 5.6vw, 84px);
+    font-size: clamp(2.3rem, 3.22vw, 3.18rem);
+  }
+
+  .word-board-focused.word-length-very-long .letter-slot {
+    width: clamp(34px, 3.36vw, 56px);
+    height: clamp(58px, 5.1vw, 76px);
+    font-size: clamp(2.02rem, 2.82vw, 2.82rem);
   }
 
   .keyboard-card {

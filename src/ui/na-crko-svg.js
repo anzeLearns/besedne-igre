@@ -4,8 +4,8 @@ const SCENE_PRESETS = {
     gallowsTransform: "translate(8 6) scale(0.94)"
   },
   desktop: {
-    viewBox: "55 -14 400 361",
-    gallowsTransform: "translate(8 -80) scale(1.04 1.34)"
+    viewBox: "18 -8 472 392",
+    gallowsTransform: "translate(-4 82) scale(0.92)"
   }
 };
 
@@ -175,7 +175,7 @@ export function renderHangmanScene(wrongGuessCount, maxWrongGuesses, animateNewe
     <svg
       class="hangman-scene"
       viewBox="${scene.viewBox}"
-      preserveAspectRatio="xMidYMax meet"
+      preserveAspectRatio="xMidYMid meet"
       role="img"
       aria-label="Risba vislic"
     >

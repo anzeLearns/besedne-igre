@@ -84,6 +84,24 @@ function renderWord(answer, revealedLetters, revealAll, clueLetter, highlightedL
     .join('<div class="space-slot" aria-hidden="true"></div>');
 }
 
+function getWordLengthClass(answer) {
+  const compactLength = answer.replaceAll(" ", "").length;
+
+  if (compactLength >= 11) {
+    return "word-length-very-long";
+  }
+
+  if (compactLength >= 9) {
+    return "word-length-long";
+  }
+
+  if (compactLength >= 6) {
+    return "word-length-medium";
+  }
+
+  return "word-length-short";
+}
+
 function renderHintButton(state, compact = false) {
   const hiddenLetters = getHiddenLetters(state);
   const isPlaying = state.round.status === "playing";
@@ -441,13 +459,13 @@ function renderOverlay(state) {
         <span class="overlay-kicker">Konec igre</span>
         <h2 class="overlay-title" id="overlay-title">Tek je končan</h2>
         <p class="overlay-text">
-          Življenja so pošla. Rezultat se je shranil v dolgoročne statistike.
+          Življenja so pošla. Rezultat se je shranil v dolgoročno statistiko.
           ${summary.beatBestRun || summary.beatBestLetters ? " Dosežen je nov osebni rekord." : ""}
         </p>
         <div class="overlay-bonuses">
-          <div class="bonus-pill"><span>Točke v tem teku</span><strong>${summary.runPoints}</strong></div>
+          <div class="bonus-pill"><span>Točke v tem poskusu</span><strong>${summary.runPoints}</strong></div>
           <div class="bonus-pill"><span>Zaključene črke</span><strong>${summary.completedLetters}</strong></div>
-          <div class="bonus-pill"><span>Najboljši tek</span><strong>${state.profile.bestRunPoints}</strong></div>
+          <div class="bonus-pill"><span>Najboljši poskus</span><strong>${state.profile.bestRunPoints}</strong></div>
           <div class="bonus-pill"><span>Največ črk</span><strong>${state.profile.bestCompletedLetters}</strong></div>
         </div>
         <button class="primary-button overlay-restart-button" type="button" data-action="restart">Nova igra</button>
@@ -680,7 +698,7 @@ function updateHintButtons(root, state) {
   const mobileFooter = root.querySelector(".mobile-word-footer");
   if (mobileFooter) {
     const helper = mobileFooter.querySelector(".mobile-word-helper");
-    const helperText = `${state.round.maxWrongGuesses} napak v tej besedi`;
+    const helperText = `Preostale napake: ${state.round.maxWrongGuesses}`;
     if (helper && helper.textContent !== helperText) {
       helper.textContent = helperText;
     }
@@ -873,7 +891,7 @@ export function renderApp(root, state, alphabet, options = {}) {
           <section class="hud-unified">
             <section class="brand-card">
               <div class="brand-copy">
-                <h1 class="brand-title">Vislice Na črko</h1>
+                <h1 class="brand-title">Vislice na črko</h1>
                 <p class="brand-subtitle">Preživi niz kategorij, lovi bonus za popolno črko in zgradi čim višjo stopnjo.</p>
               </div>
             </section>
@@ -949,8 +967,9 @@ export function renderApp(root, state, alphabet, options = {}) {
             <section class="game-panel">
               ${renderDesktopCategorySpotlight(state, context.currentCategory, context.progressCurrent, context.progressTotal)}
 
-              <div class="word-board word-board-focused${context.isSolvedReveal ? " word-board-solved" : ""}${context.isFailedReveal ? " word-board-revealed" : ""}" aria-live="polite" aria-label="Skrita beseda">
+              <div class="word-board word-board-focused ${getWordLengthClass(state.round.answer)}${context.isSolvedReveal ? " word-board-solved" : ""}${context.isFailedReveal ? " word-board-revealed" : ""}" aria-live="polite" aria-label="Skrita beseda">
                 <div class="word-tools">
+                  <span class="word-tools-spacer" aria-hidden="true"></span>
                   ${renderHintButton(state)}
                 </div>
                 <div class="word-display${context.isFailedReveal ? " word-display-revealed" : ""}">
