@@ -450,7 +450,7 @@ function renderOverlay(state) {
           <div class="bonus-pill"><span>Najboljši tek</span><strong>${state.profile.bestRunPoints}</strong></div>
           <div class="bonus-pill"><span>Največ črk</span><strong>${state.profile.bestCompletedLetters}</strong></div>
         </div>
-        <button class="primary-button" type="button" data-action="advance">Nova igra</button>
+        <button class="primary-button overlay-restart-button" type="button" data-action="restart">Nova igra</button>
       </section>
     </div>
   `;

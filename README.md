@@ -15,16 +15,4 @@
 
 Odpri `index.html` v brskalniku ali za razvoj zaženi poljuben statični strežnik v korenu projekta.
 
-## Objava na GitHub Pages
 
-1. Potisni projekt na vejo `main`.
-2. Na GitHubu odpri `Settings` -> `Pages`.
-3. Izberi `Deploy from a branch`.
-4. Nastavi vejo `main` in mapo `/root`.
-5. Shrani in počakaj na objavo.
-
-## Opombe za Pages
-
-- Vstopna datoteka uporablja `./styles.css` in `./src/main.js`, ne absolutnih poti.
-- Aplikacija ne uporablja hardcodanih `localhost`, `127.0.0.1` ali lokalnih disk poti.
-- Ker ni odvisna od build koraka, jo lahko GitHub Pages postreže neposredno iz repozitorija.
