@@ -84,24 +84,6 @@ function renderWord(answer, revealedLetters, revealAll, clueLetter, highlightedL
     .join('<div class="space-slot" aria-hidden="true"></div>');
 }
 
-function getWordLengthClass(answer) {
-  const compactLength = answer.replaceAll(" ", "").length;
-
-  if (compactLength >= 11) {
-    return "word-length-very-long";
-  }
-
-  if (compactLength >= 9) {
-    return "word-length-long";
-  }
-
-  if (compactLength >= 6) {
-    return "word-length-medium";
-  }
-
-  return "word-length-short";
-}
-
 function renderHintButton(state, compact = false) {
   const hiddenLetters = getHiddenLetters(state);
   const isPlaying = state.round.status === "playing";
@@ -459,13 +441,13 @@ function renderOverlay(state) {
         <span class="overlay-kicker">Konec igre</span>
         <h2 class="overlay-title" id="overlay-title">Tek je končan</h2>
         <p class="overlay-text">
-          Življenja so pošla. Rezultat se je shranil v dolgoročno statistiko.
+          Življenja so pošla. Rezultat se je shranil v dolgoročne statistike.
           ${summary.beatBestRun || summary.beatBestLetters ? " Dosežen je nov osebni rekord." : ""}
         </p>
         <div class="overlay-bonuses">
-          <div class="bonus-pill"><span>Točke v tem poskusu</span><strong>${summary.runPoints}</strong></div>
+          <div class="bonus-pill"><span>Točke v tem teku</span><strong>${summary.runPoints}</strong></div>
           <div class="bonus-pill"><span>Zaključene črke</span><strong>${summary.completedLetters}</strong></div>
-          <div class="bonus-pill"><span>Najboljši poskus</span><strong>${state.profile.bestRunPoints}</strong></div>
+          <div class="bonus-pill"><span>Najboljši tek</span><strong>${state.profile.bestRunPoints}</strong></div>
           <div class="bonus-pill"><span>Največ črk</span><strong>${state.profile.bestCompletedLetters}</strong></div>
         </div>
         <button class="primary-button overlay-restart-button" type="button" data-action="restart">Nova igra</button>
@@ -698,7 +680,7 @@ function updateHintButtons(root, state) {
   const mobileFooter = root.querySelector(".mobile-word-footer");
   if (mobileFooter) {
     const helper = mobileFooter.querySelector(".mobile-word-helper");
-    const helperText = `Preostale napake: ${state.round.maxWrongGuesses}`;
+    const helperText = `${state.round.maxWrongGuesses} napak v tej besedi`;
     if (helper && helper.textContent !== helperText) {
       helper.textContent = helperText;
     }
@@ -836,6 +818,73 @@ function updateDesktopCategoryProgress(root, context) {
   });
 }
 
+function updateCategorySpotlights(root, state, context) {
+  const category = context.currentCategory;
+  const accentClass = getCategoryAccentClass(category.id);
+  const thumbnailImage = CATEGORY_THUMBNAIL_IMAGES[category.id] || CATEGORY_THUMBNAIL_IMAGES.predmet;
+  const progressText = `${context.progressCurrent}/${context.progressTotal}`;
+
+  const mobileSpotlight = root.querySelector(".mobile-category-spotlight");
+  if (mobileSpotlight) {
+    const className = `mobile-category-spotlight ${accentClass}`;
+    if (mobileSpotlight.className !== className) {
+      mobileSpotlight.className = className;
+    }
+
+    const thumbnail = mobileSpotlight.querySelector(".mobile-category-thumbnail");
+    if (thumbnail?.style.getPropertyValue("--category-thumbnail") !== `url('${thumbnailImage}')`) {
+      thumbnail?.style.setProperty("--category-thumbnail", `url('${thumbnailImage}')`);
+    }
+
+    const name = mobileSpotlight.querySelector(".mobile-category-name");
+    if (name && name.textContent !== category.label) {
+      name.textContent = category.label;
+    }
+
+    const meta = mobileSpotlight.querySelector(".mobile-category-meta");
+    if (meta) {
+      const nextMeta = `
+          <span>Črka <strong>${escapeHtml(state.run.currentLetter)}</strong></span>
+          <span class="mobile-category-meta-divider" aria-hidden="true">•</span>
+          <span>${progressText}</span>
+        `;
+      if (meta.innerHTML !== nextMeta) {
+        meta.innerHTML = nextMeta;
+      }
+    }
+  }
+
+  const desktopSpotlight = root.querySelector(".desktop-category-spotlight");
+  if (desktopSpotlight) {
+    const className = `desktop-category-spotlight ${accentClass}`;
+    if (desktopSpotlight.className !== className) {
+      desktopSpotlight.className = className;
+    }
+
+    const thumbnail = desktopSpotlight.querySelector(".desktop-category-thumbnail");
+    if (thumbnail?.style.getPropertyValue("--category-thumbnail") !== `url('${thumbnailImage}')`) {
+      thumbnail?.style.setProperty("--category-thumbnail", `url('${thumbnailImage}')`);
+    }
+
+    const name = desktopSpotlight.querySelector(".desktop-category-name");
+    if (name && name.textContent !== category.label) {
+      name.textContent = category.label;
+    }
+
+    const meta = desktopSpotlight.querySelector(".desktop-category-meta");
+    if (meta) {
+      const nextMeta = `
+          <span>Črka <strong>${escapeHtml(state.run.currentLetter)}</strong></span>
+          <span aria-hidden="true">•</span>
+          <span>${progressText}</span>
+        `;
+      if (meta.innerHTML !== nextMeta) {
+        meta.innerHTML = nextMeta;
+      }
+    }
+  }
+}
+
 export function renderApp(root, state, alphabet, options = {}) {
   const { isIntroOpen = false, isFirstVisit = false, categoryTransition = null, autoAdvance = null } = options;
   preloadCategoryImages();
@@ -891,7 +940,7 @@ export function renderApp(root, state, alphabet, options = {}) {
           <section class="hud-unified">
             <section class="brand-card">
               <div class="brand-copy">
-                <h1 class="brand-title">Vislice na črko</h1>
+                <h1 class="brand-title">Vislice Na črko</h1>
                 <p class="brand-subtitle">Preživi niz kategorij, lovi bonus za popolno črko in zgradi čim višjo stopnjo.</p>
               </div>
             </section>
@@ -967,9 +1016,8 @@ export function renderApp(root, state, alphabet, options = {}) {
             <section class="game-panel">
               ${renderDesktopCategorySpotlight(state, context.currentCategory, context.progressCurrent, context.progressTotal)}
 
-              <div class="word-board word-board-focused ${getWordLengthClass(state.round.answer)}${context.isSolvedReveal ? " word-board-solved" : ""}${context.isFailedReveal ? " word-board-revealed" : ""}" aria-live="polite" aria-label="Skrita beseda">
+              <div class="word-board word-board-focused${context.isSolvedReveal ? " word-board-solved" : ""}${context.isFailedReveal ? " word-board-revealed" : ""}" aria-live="polite" aria-label="Skrita beseda">
                 <div class="word-tools">
-                  <span class="word-tools-spacer" aria-hidden="true"></span>
                   ${renderHintButton(state)}
                 </div>
                 <div class="word-display${context.isFailedReveal ? " word-display-revealed" : ""}">
@@ -1001,6 +1049,7 @@ export function updateAppInPlace(root, state, options = {}) {
   const context = getRenderContext(state, autoAdvance);
 
   updateHud(root, state, context);
+  updateCategorySpotlights(root, state, context);
   updateWordBoards(root, state, context);
   updateHintButtons(root, state);
   updateKeyboardButtons(root, state);
